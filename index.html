@@ -1154,27 +1154,60 @@
                 <div class="chart-container animate-slide-up">
                     <h3 class="chart-title">Shot Chart Analytics - Last 30 Days</h3>
                     <div id="basketballCourt" class="basketball-court">
-                        <svg viewBox="0 0 470 250" class="court-svg">
-                            <!-- Court outline -->
-                            <rect x="0" y="0" width="470" height="250" fill="#8B4513" stroke="#fff" stroke-width="2"/>
+                        <svg viewBox="0 0 940 500" class="court-svg">
+                            <!-- Court background -->
+                            <rect x="0" y="0" width="940" height="500" fill="#D2B48C" stroke="#fff" stroke-width="4"/>
                             
-                            <!-- Three-point line -->
-                            <path d="M 0 47 A 190 190 0 0 1 0 203" fill="none" stroke="#fff" stroke-width="2"/>
-                            <line x1="0" y1="47" x2="140" y2="47" stroke="#fff" stroke-width="2"/>
-                            <line x1="0" y1="203" x2="140" y2="203" stroke="#fff" stroke-width="2"/>
+                            <!-- Center court circle -->
+                            <circle cx="470" cy="250" r="60" fill="none" stroke="#fff" stroke-width="3"/>
+                            <circle cx="470" cy="250" r="20" fill="none" stroke="#fff" stroke-width="2"/>
                             
-                            <!-- Free throw line -->
-                            <rect x="0" y="95" width="190" height="60" fill="none" stroke="#fff" stroke-width="2"/>
+                            <!-- Center line -->
+                            <line x1="470" y1="0" x2="470" y2="500" stroke="#fff" stroke-width="3"/>
+                            
+                            <!-- LEFT SIDE (where shots are taken) -->
+                            <!-- Three-point arc -->
+                            <path d="M 94 50 A 237 237 0 0 1 94 450" fill="none" stroke="#fff" stroke-width="3"/>
+                            <!-- Three-point corners -->
+                            <line x1="0" y1="50" x2="94" y2="50" stroke="#fff" stroke-width="3"/>
+                            <line x1="0" y1="450" x2="94" y2="450" stroke="#fff" stroke-width="3"/>
+                            
+                            <!-- Free throw lane (paint) -->
+                            <rect x="0" y="170" width="190" height="160" fill="rgba(255,255,255,0.1)" stroke="#fff" stroke-width="3"/>
                             
                             <!-- Free throw circle -->
-                            <circle cx="190" cy="125" r="30" fill="none" stroke="#fff" stroke-width="2"/>
+                            <circle cx="190" cy="250" r="60" fill="none" stroke="#fff" stroke-width="3"/>
+                            <path d="M 130 250 A 60 60 0 0 1 250 250" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="5,5"/>
                             
-                            <!-- Basket -->
-                            <circle cx="52.5" cy="125" r="9" fill="none" stroke="#ff6b35" stroke-width="3"/>
-                            <rect x="47.5" y="122" width="10" height="6" fill="none" stroke="#ff6b35" stroke-width="2"/>
+                            <!-- Free throw line -->
+                            <line x1="190" y1="170" x2="190" y2="330" stroke="#fff" stroke-width="3"/>
                             
-                            <!-- Center court line -->
-                            <line x1="235" y1="0" x2="235" y2="250" stroke="#fff" stroke-width="2"/>
+                            <!-- Basket and rim -->
+                            <circle cx="52" cy="250" r="9" fill="#FF6347" stroke="#fff" stroke-width="2" opacity="0.9"/>
+                            <!-- Backboard -->
+                            <line x1="43" y1="230" x2="43" y2="270" stroke="#fff" stroke-width="4"/>
+                            
+                            <!-- RIGHT SIDE (mirror for full court) -->
+                            <!-- Three-point arc -->
+                            <path d="M 846 50 A 237 237 0 0 0 846 450" fill="none" stroke="#fff" stroke-width="3"/>
+                            <!-- Three-point corners -->
+                            <line x1="846" y1="50" x2="940" y2="50" stroke="#fff" stroke-width="3"/>
+                            <line x1="846" y1="450" x2="940" y2="450" stroke="#fff" stroke-width="3"/>
+                            
+                            <!-- Free throw lane (paint) -->
+                            <rect x="750" y="170" width="190" height="160" fill="rgba(255,255,255,0.1)" stroke="#fff" stroke-width="3"/>
+                            
+                            <!-- Free throw circle -->
+                            <circle cx="750" cy="250" r="60" fill="none" stroke="#fff" stroke-width="3"/>
+                            <path d="M 690 250 A 60 60 0 0 0 810 250" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="5,5"/>
+                            
+                            <!-- Free throw line -->
+                            <line x1="750" y1="170" x2="750" y2="330" stroke="#fff" stroke-width="3"/>
+                            
+                            <!-- Basket and rim -->
+                            <circle cx="888" cy="250" r="9" fill="#FF6347" stroke="#fff" stroke-width="2" opacity="0.9"/>
+                            <!-- Backboard -->
+                            <line x1="897" y1="230" x2="897" y2="270" stroke="#fff" stroke-width="4"/>
                             
                             <!-- Shot markers will be added here -->
                             <g id="shotMarkers"></g>
@@ -1689,17 +1722,38 @@
             const made = [];
             const missed = [];
             
-            // Generate realistic basketball shot distribution mapped to court coordinates
-            for (let i = 0; i < 30; i++) {
-                // Convert basketball court positions to SVG coordinates
-                // Court is 470x250 SVG units, basket at (52.5, 125)
+            // Generate realistic basketball shot distribution
+            // Court is 940x500 SVG units, left basket at (52, 250)
+            
+            for (let i = 0; i < 25; i++) {
+                let courtX, courtY;
                 
-                const courtX = Math.random() * 180 + 60; // 60-240 SVG units (left side of court)
-                const courtY = Math.random() * 200 + 25; // 25-225 SVG units
+                // Generate shots from realistic basketball positions
+                const shotType = Math.random();
+                
+                if (shotType < 0.3) {
+                    // Close range shots (paint area)
+                    courtX = Math.random() * 140 + 50; // 50-190
+                    courtY = Math.random() * 120 + 190; // 190-310
+                } else if (shotType < 0.6) {
+                    // Mid-range shots
+                    courtX = Math.random() * 200 + 100; // 100-300
+                    courtY = Math.random() * 200 + 150; // 150-350
+                } else {
+                    // Three-point shots
+                    const angle = Math.random() * Math.PI * 0.8 + 0.1 * Math.PI; // Avoid extreme corners
+                    const radius = Math.random() * 50 + 240; // 240-290 from basket
+                    courtX = 52 + radius * Math.cos(angle);
+                    courtY = 250 + radius * Math.sin(angle - Math.PI/2);
+                }
+                
+                // Ensure shots stay on left side of court and within bounds
+                courtX = Math.max(60, Math.min(courtX, 450));
+                courtY = Math.max(50, Math.min(courtY, 450));
                 
                 // Calculate distance from basket for realistic make percentage
-                const distanceFromBasket = Math.sqrt(Math.pow(courtX - 52.5, 2) + Math.pow(courtY - 125, 2));
-                const makePercentage = Math.max(0.2, 0.85 - distanceFromBasket * 0.003);
+                const distanceFromBasket = Math.sqrt(Math.pow(courtX - 52, 2) + Math.pow(courtY - 250, 2));
+                const makePercentage = Math.max(0.25, 0.9 - distanceFromBasket * 0.002);
                 
                 if (Math.random() < makePercentage) {
                     made.push({x: courtX, y: courtY});
