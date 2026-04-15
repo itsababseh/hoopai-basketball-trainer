@@ -712,10 +712,70 @@
             margin-bottom: 24px;
         }
 
-        .chart-canvas {
-            width: 100% !important;
-            height: 300px !important;
-            border-radius: 16px;
+        /* Basketball Court Visualization */
+        .basketball-court {
+            width: 100%;
+            padding: 24px;
+            background: var(--surface-gradient);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .court-svg {
+            width: 100%;
+            height: auto;
+            max-width: 500px;
+            margin: 0 auto;
+            display: block;
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+        }
+        
+        .court-legend {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+        }
+        
+        .legend-dot.make {
+            background: #4CAF50;
+            box-shadow: 0 0 8px rgba(76, 175, 80, 0.4);
+        }
+        
+        .legend-dot.miss {
+            background: #FF5252;
+            box-shadow: 0 0 8px rgba(255, 82, 82, 0.4);
+        }
+        
+        .shot-marker {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .shot-marker:hover {
+            transform: scale(1.2);
+            filter: brightness(1.2);
         }
 
         /* Premium recommendations */
@@ -1090,7 +1150,44 @@
                 <!-- Advanced Shot Chart -->
                 <div class="chart-container animate-slide-up">
                     <h3 class="chart-title">Shot Chart Analytics - Last 30 Days</h3>
-                    <canvas id="shotChart" class="chart-canvas"></canvas>
+                    <div id="basketballCourt" class="basketball-court">
+                        <svg viewBox="0 0 470 250" class="court-svg">
+                            <!-- Court outline -->
+                            <rect x="0" y="0" width="470" height="250" fill="#8B4513" stroke="#fff" stroke-width="2"/>
+                            
+                            <!-- Three-point line -->
+                            <path d="M 0 47 A 190 190 0 0 1 0 203" fill="none" stroke="#fff" stroke-width="2"/>
+                            <line x1="0" y1="47" x2="140" y2="47" stroke="#fff" stroke-width="2"/>
+                            <line x1="0" y1="203" x2="140" y2="203" stroke="#fff" stroke-width="2"/>
+                            
+                            <!-- Free throw line -->
+                            <rect x="0" y="95" width="190" height="60" fill="none" stroke="#fff" stroke-width="2"/>
+                            
+                            <!-- Free throw circle -->
+                            <circle cx="190" cy="125" r="30" fill="none" stroke="#fff" stroke-width="2"/>
+                            
+                            <!-- Basket -->
+                            <circle cx="52.5" cy="125" r="9" fill="none" stroke="#ff6b35" stroke-width="3"/>
+                            <rect x="47.5" y="122" width="10" height="6" fill="none" stroke="#ff6b35" stroke-width="2"/>
+                            
+                            <!-- Center court line -->
+                            <line x1="235" y1="0" x2="235" y2="250" stroke="#fff" stroke-width="2"/>
+                            
+                            <!-- Shot markers will be added here -->
+                            <g id="shotMarkers"></g>
+                        </svg>
+                        
+                        <div class="court-legend">
+                            <div class="legend-item">
+                                <div class="legend-dot make"></div>
+                                <span>Made Shots</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-dot miss"></div>
+                                <span>Missed Shots</span>
+                            </div>
+                        </div>
+                    </div>
                     <div style="margin-top: 20px; display: flex; justify-content: center; gap: 24px; font-size: 14px; color: var(--text-secondary);">
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <div style="width: 12px; height: 12px; background: var(--success); border-radius: 50%;"></div>
@@ -1174,7 +1271,7 @@
         let mediaRecorder = null;
         let isRecording = false;
         let recordedChunks = [];
-        let shotChart = null;
+        let basketballCourt = null;
 
         // 4 Unique confirmed working basketball training videos
         const trainingVideos = {
@@ -1236,7 +1333,7 @@
             event.target.classList.add('active');
 
             // Initialize chart if switching to progress tab
-            if (tabName === 'progress' && !shotChart) {
+            if (tabName === 'progress' && !basketballCourt) {
                 setTimeout(() => initializeAdvancedChart(), 300);
             }
         }
@@ -1526,30 +1623,9 @@
 
         // Advanced shot chart with Chart.js
         function initializeAdvancedChart() {
-            const ctx = document.getElementById('shotChart').getContext('2d');
-            
-            // Generate realistic shot data
-            const shotData = generateShotData();
-            
-            shotChart = new Chart(ctx, {
-                type: 'scatter',
-                data: {
-                    datasets: [{
-                        label: 'Made Shots',
-                        data: shotData.made,
-                        backgroundColor: 'rgba(16, 185, 129, 0.8)',
-                        borderColor: 'rgba(16, 185, 129, 1)',
-                        pointRadius: 8,
-                        pointHoverRadius: 12
-                    }, {
-                        label: 'Missed Shots',
-                        data: shotData.missed,
-                        backgroundColor: 'rgba(239, 68, 68, 0.8)',
-                        borderColor: 'rgba(239, 68, 68, 1)',
-                        pointRadius: 8,
-                        pointHoverRadius: 12
-                    }]
-                },
+            // Initialize basketball court
+            initializeBasketballCourt();
+            basketballCourt = true;
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
@@ -1601,23 +1677,81 @@
             });
         }
 
+        function initializeBasketballCourt() {
+            const shotData = generateShotData();
+            const shotMarkers = document.getElementById('shotMarkers');
+            
+            // Clear any existing markers
+            shotMarkers.innerHTML = '';
+            
+            // Add shot markers to the court
+            shotData.made.forEach(shot => {
+                const marker = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                marker.setAttribute('cx', shot.x);
+                marker.setAttribute('cy', shot.y);
+                marker.setAttribute('r', '4');
+                marker.setAttribute('fill', '#4CAF50');
+                marker.setAttribute('stroke', '#fff');
+                marker.setAttribute('stroke-width', '1');
+                marker.setAttribute('class', 'shot-marker');
+                marker.setAttribute('opacity', '0');
+                shotMarkers.appendChild(marker);
+                
+                // Animate marker appearance
+                anime({
+                    targets: marker,
+                    opacity: 0.9,
+                    r: [0, 4],
+                    duration: 800,
+                    delay: Math.random() * 2000,
+                    easing: 'easeOutElastic(1, .6)'
+                });
+            });
+            
+            shotData.missed.forEach(shot => {
+                const marker = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                marker.setAttribute('cx', shot.x);
+                marker.setAttribute('cy', shot.y);
+                marker.setAttribute('r', '4');
+                marker.setAttribute('fill', '#FF5252');
+                marker.setAttribute('stroke', '#fff');
+                marker.setAttribute('stroke-width', '1');
+                marker.setAttribute('class', 'shot-marker');
+                marker.setAttribute('opacity', '0');
+                shotMarkers.appendChild(marker);
+                
+                // Animate marker appearance
+                anime({
+                    targets: marker,
+                    opacity: 0.9,
+                    r: [0, 4],
+                    duration: 800,
+                    delay: Math.random() * 2000,
+                    easing: 'easeOutElastic(1, .6)'
+                });
+            });
+        }
+
         function generateShotData() {
             const made = [];
             const missed = [];
             
-            // Generate realistic basketball shot distribution
-            for (let i = 0; i < 50; i++) {
-                const x = (Math.random() - 0.5) * 40; // -20 to 20 feet
-                const y = Math.random() * 23 + 2; // 2 to 25 feet
+            // Generate realistic basketball shot distribution mapped to court coordinates
+            for (let i = 0; i < 30; i++) {
+                // Convert basketball court positions to SVG coordinates
+                // Court is 470x250 SVG units, basket at (52.5, 125)
                 
-                // Higher make percentage closer to basket
-                const distance = Math.sqrt(x*x + y*y);
-                const makePercentage = Math.max(0.2, 0.9 - distance * 0.03);
+                const courtX = Math.random() * 180 + 60; // 60-240 SVG units (left side of court)
+                const courtY = Math.random() * 200 + 25; // 25-225 SVG units
+                
+                // Calculate distance from basket for realistic make percentage
+                const distanceFromBasket = Math.sqrt(Math.pow(courtX - 52.5, 2) + Math.pow(courtY - 125, 2));
+                const makePercentage = Math.max(0.2, 0.85 - distanceFromBasket * 0.003);
                 
                 if (Math.random() < makePercentage) {
-                    made.push({x: x, y: y});
+                    made.push({x: courtX, y: courtY});
                 } else {
-                    missed.push({x: x, y: y});
+                    missed.push({x: courtX, y: courtY});
                 }
             }
             
@@ -1687,9 +1821,7 @@
                 if (stream && videoElement) {
                     videoElement.srcObject = stream;
                 }
-                if (shotChart) {
-                    shotChart.resize();
-                }
+                // Basketball court is responsive by default
             }, 500);
         });
     </script>
