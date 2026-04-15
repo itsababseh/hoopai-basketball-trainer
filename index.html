@@ -1313,28 +1313,47 @@
                         
                         // Show new tab
                         const newTab = document.getElementById(tabName);
-                        newTab.classList.add('active');
-                        
-                        anime({
-                            targets: newTab,
-                            opacity: [0, 1],
-                            translateY: [20, 0],
-                            duration: 400,
-                            easing: 'easeOutQuad'
-                        });
+                        if (newTab) {
+                            newTab.classList.add('active');
+                            
+                            anime({
+                                targets: newTab,
+                                opacity: [0, 1],
+                                translateY: [20, 0],
+                                duration: 400,
+                                easing: 'easeOutQuad'
+                            });
+                        }
                     }
                 });
+            } else {
+                // If no current tab, just show the new one
+                const newTab = document.getElementById(tabName);
+                if (newTab) {
+                    document.querySelectorAll('.tab-content').forEach(tab => {
+                        tab.classList.remove('active');
+                    });
+                    newTab.classList.add('active');
+                }
             }
             
             // Update nav buttons
             document.querySelectorAll('.nav-tab').forEach(tab => {
                 tab.classList.remove('active');
             });
-            event.target.classList.add('active');
+            
+            // Find and activate the clicked button
+            const clickedButton = document.querySelector(`[onclick="showTab('${tabName}')"]`);
+            if (clickedButton) {
+                clickedButton.classList.add('active');
+            }
 
-            // Initialize chart if switching to progress tab
+            // Initialize basketball court if switching to progress tab
             if (tabName === 'progress' && !basketballCourt) {
-                setTimeout(() => initializeAdvancedChart(), 300);
+                setTimeout(() => {
+                    initializeBasketballCourt();
+                    basketballCourt = true;
+                }, 300);
             }
         }
 
