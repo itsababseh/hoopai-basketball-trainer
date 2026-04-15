@@ -1299,53 +1299,37 @@
 
         // Enhanced tab switching with smooth animations
         function showTab(tabName) {
-            // Fade out current tab
-            const currentTab = document.querySelector('.tab-content.active');
-            if (currentTab) {
-                anime({
-                    targets: currentTab,
-                    opacity: 0,
-                    translateY: -20,
-                    duration: 200,
-                    easing: 'easeInQuad',
-                    complete: function() {
-                        currentTab.classList.remove('active');
-                        
-                        // Show new tab
-                        const newTab = document.getElementById(tabName);
-                        if (newTab) {
-                            newTab.classList.add('active');
-                            
-                            anime({
-                                targets: newTab,
-                                opacity: [0, 1],
-                                translateY: [20, 0],
-                                duration: 400,
-                                easing: 'easeOutQuad'
-                            });
-                        }
-                    }
-                });
-            } else {
-                // If no current tab, just show the new one
-                const newTab = document.getElementById(tabName);
-                if (newTab) {
-                    document.querySelectorAll('.tab-content').forEach(tab => {
-                        tab.classList.remove('active');
-                    });
-                    newTab.classList.add('active');
-                }
-            }
+            console.log('Switching to tab:', tabName);
             
-            // Update nav buttons
+            // Remove active class from all tabs and buttons first
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
             document.querySelectorAll('.nav-tab').forEach(tab => {
                 tab.classList.remove('active');
             });
             
-            // Find and activate the clicked button
-            const clickedButton = document.querySelector(`[onclick="showTab('${tabName}')"]`);
-            if (clickedButton) {
-                clickedButton.classList.add('active');
+            // Show the target tab
+            const targetTab = document.getElementById(tabName);
+            const targetButton = document.querySelector(`[onclick="showTab('${tabName}')"]`);
+            
+            if (targetTab && targetButton) {
+                // Activate new tab and button
+                targetTab.classList.add('active');
+                targetButton.classList.add('active');
+                
+                // Animate the tab appearance
+                anime({
+                    targets: targetTab,
+                    opacity: [0, 1],
+                    translateY: [20, 0],
+                    duration: 400,
+                    easing: 'easeOutQuad'
+                });
+                
+                console.log('Tab switched successfully to:', tabName);
+            } else {
+                console.error('Tab or button not found for:', tabName);
             }
 
             // Initialize basketball court if switching to progress tab
@@ -1353,7 +1337,7 @@
                 setTimeout(() => {
                     initializeBasketballCourt();
                     basketballCourt = true;
-                }, 300);
+                }, 500);
             }
         }
 
