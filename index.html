@@ -1154,50 +1154,53 @@
                 <div class="chart-container animate-slide-up">
                     <h3 class="chart-title">Shot Chart Analytics - Last 30 Days</h3>
                     <div id="basketballCourt" class="basketball-court">
-                        <svg viewBox="0 0 940 500" class="court-svg">
-                            <!-- Court background -->
-                            <rect x="0" y="0" width="940" height="500" fill="#D2B48C" stroke="#fff" stroke-width="4"/>
+                        <svg viewBox="0 0 500 350" class="court-svg">
+                            <!-- Court background (hardwood color) -->
+                            <rect x="0" y="0" width="500" height="350" fill="#DEB887" stroke="#fff" stroke-width="4"/>
                             
-                            <!-- Center court circle -->
-                            <circle cx="470" cy="250" r="60" fill="none" stroke="#fff" stroke-width="3"/>
-                            <circle cx="470" cy="250" r="20" fill="none" stroke="#fff" stroke-width="2"/>
+                            <!-- Baseline (under basket) -->
+                            <line x1="0" y1="0" x2="0" y2="350" stroke="#fff" stroke-width="4"/>
                             
-                            <!-- Center line -->
-                            <line x1="470" y1="0" x2="470" y2="500" stroke="#fff" stroke-width="3"/>
+                            <!-- Sidelines -->
+                            <line x1="0" y1="0" x2="500" y2="0" stroke="#fff" stroke-width="4"/>
+                            <line x1="0" y1="350" x2="500" y2="350" stroke="#fff" stroke-width="4"/>
                             
-                            <!-- LEFT SIDE (where shots are taken) -->
-                            <!-- Three-point arc -->
-                            <path d="M 94 50 A 237 237 0 0 1 94 450" fill="none" stroke="#fff" stroke-width="3"/>
-                            <!-- Three-point corners -->
-                            <line x1="0" y1="50" x2="94" y2="50" stroke="#fff" stroke-width="3"/>
-                            <line x1="0" y1="450" x2="94" y2="450" stroke="#fff" stroke-width="3"/>
+                            <!-- Three-point line (NBA dimensions scaled) -->
+                            <path d="M 0 64 
+                                     L 140 64 
+                                     A 115 115 0 0 1 140 286
+                                     L 0 286" 
+                                  fill="none" stroke="#fff" stroke-width="4"/>
                             
-                            <!-- Free throw lane (paint) -->
-                            <rect x="0" y="170" width="190" height="160" fill="rgba(255,255,255,0.1)" stroke="#fff" stroke-width="3"/>
+                            <!-- Free throw lane (the paint) -->
+                            <rect x="0" y="125" width="150" height="100" fill="rgba(255,138,101,0.15)" stroke="#fff" stroke-width="4"/>
                             
                             <!-- Free throw circle -->
-                            <circle cx="190" cy="250" r="60" fill="none" stroke="#fff" stroke-width="3"/>
-                            <path d="M 130 250 A 60 60 0 0 1 250 250" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="5,5"/>
+                            <circle cx="150" cy="175" r="50" fill="none" stroke="#fff" stroke-width="3"/>
+                            <!-- Dashed free throw circle (shooter side) -->
+                            <path d="M 100 175 A 50 50 0 0 1 200 175" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="8,6"/>
                             
                             <!-- Free throw line -->
-                            <line x1="190" y1="170" x2="190" y2="330" stroke="#fff" stroke-width="3"/>
+                            <line x1="150" y1="125" x2="150" y2="225" stroke="#fff" stroke-width="4"/>
+                            
+                            <!-- Lane hash marks -->
+                            <line x1="75" y1="125" x2="75" y2="140" stroke="#fff" stroke-width="3"/>
+                            <line x1="75" y1="210" x2="75" y2="225" stroke="#fff" stroke-width="3"/>
+                            <line x1="110" y1="125" x2="110" y2="140" stroke="#fff" stroke-width="3"/>
+                            <line x1="110" y1="210" x2="110" y2="225" stroke="#fff" stroke-width="3"/>
                             
                             <!-- Basket and rim -->
-                            <circle cx="52" cy="250" r="9" fill="#FF6347" stroke="#fff" stroke-width="2" opacity="0.9"/>
+                            <circle cx="30" cy="175" r="12" fill="none" stroke="#FF6B35" stroke-width="5"/>
+                            <circle cx="30" cy="175" r="3" fill="#FF6B35"/>
+                            
                             <!-- Backboard -->
-                            <line x1="43" y1="230" x2="43" y2="270" stroke="#fff" stroke-width="4"/>
+                            <rect x="0" y="160" width="8" height="30" fill="#fff" stroke="#fff" stroke-width="2"/>
                             
-                            <!-- RIGHT SIDE (mirror for full court) -->
-                            <!-- Three-point arc -->
-                            <path d="M 846 50 A 237 237 0 0 0 846 450" fill="none" stroke="#fff" stroke-width="3"/>
-                            <!-- Three-point corners -->
-                            <line x1="846" y1="50" x2="940" y2="50" stroke="#fff" stroke-width="3"/>
-                            <line x1="846" y1="450" x2="940" y2="450" stroke="#fff" stroke-width="3"/>
+                            <!-- Half court line (end of our view) -->
+                            <line x1="280" y1="0" x2="280" y2="350" stroke="#fff" stroke-width="4" opacity="0.7"/>
                             
-                            <!-- Free throw lane (paint) -->
-                            <rect x="750" y="170" width="190" height="160" fill="rgba(255,255,255,0.1)" stroke="#fff" stroke-width="3"/>
-                            
-                            <!-- Free throw circle -->
+                            <!-- Center court circle (partial) -->
+                            <path d="M 280 100 A 75 75 0 0 1 280 250" fill="none" stroke="#fff" stroke-width="3" opacity="0.7"/>
                             <circle cx="750" cy="250" r="60" fill="none" stroke="#fff" stroke-width="3"/>
                             <path d="M 690 250 A 60 60 0 0 0 810 250" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="5,5"/>
                             
@@ -1722,38 +1725,36 @@
             const made = [];
             const missed = [];
             
-            // Generate realistic basketball shot distribution
-            // Court is 940x500 SVG units, left basket at (52, 250)
+            // Generate realistic basketball shot distribution for half court
+            // Court is 500x350 SVG units, basket at (30, 175)
             
-            for (let i = 0; i < 25; i++) {
+            for (let i = 0; i < 20; i++) {
                 let courtX, courtY;
                 
                 // Generate shots from realistic basketball positions
                 const shotType = Math.random();
                 
-                if (shotType < 0.3) {
+                if (shotType < 0.4) {
                     // Close range shots (paint area)
-                    courtX = Math.random() * 140 + 50; // 50-190
-                    courtY = Math.random() * 120 + 190; // 190-310
-                } else if (shotType < 0.6) {
+                    courtX = Math.random() * 100 + 35; // 35-135 (paint area)
+                    courtY = Math.random() * 80 + 135; // 135-215 (paint height)
+                } else if (shotType < 0.7) {
                     // Mid-range shots
-                    courtX = Math.random() * 200 + 100; // 100-300
-                    courtY = Math.random() * 200 + 150; // 150-350
+                    courtX = Math.random() * 120 + 80; // 80-200
+                    courtY = Math.random() * 180 + 85; // 85-265
                 } else {
                     // Three-point shots
-                    const angle = Math.random() * Math.PI * 0.8 + 0.1 * Math.PI; // Avoid extreme corners
-                    const radius = Math.random() * 50 + 240; // 240-290 from basket
-                    courtX = 52 + radius * Math.cos(angle);
-                    courtY = 250 + radius * Math.sin(angle - Math.PI/2);
+                    courtX = Math.random() * 120 + 150; // 150-270 (beyond 3pt line)
+                    courtY = Math.random() * 200 + 75; // 75-275
                 }
                 
-                // Ensure shots stay on left side of court and within bounds
-                courtX = Math.max(60, Math.min(courtX, 450));
-                courtY = Math.max(50, Math.min(courtY, 450));
+                // Ensure shots stay within court bounds
+                courtX = Math.max(35, Math.min(courtX, 270));
+                courtY = Math.max(25, Math.min(courtY, 325));
                 
                 // Calculate distance from basket for realistic make percentage
-                const distanceFromBasket = Math.sqrt(Math.pow(courtX - 52, 2) + Math.pow(courtY - 250, 2));
-                const makePercentage = Math.max(0.25, 0.9 - distanceFromBasket * 0.002);
+                const distanceFromBasket = Math.sqrt(Math.pow(courtX - 30, 2) + Math.pow(courtY - 175, 2));
+                const makePercentage = Math.max(0.2, 0.85 - distanceFromBasket * 0.0015);
                 
                 if (Math.random() < makePercentage) {
                     made.push({x: courtX, y: courtY});
