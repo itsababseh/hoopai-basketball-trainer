@@ -1624,62 +1624,6 @@
             }, 2000);
         }
 
-        // Advanced shot chart with Chart.js
-        function initializeAdvancedChart() {
-            // Initialize basketball court
-            initializeBasketballCourt();
-            basketballCourt = true;
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const result = context.dataset.label.includes('Made') ? 'Made' : 'Missed';
-                                    return `${result} shot at (${context.parsed.x}, ${context.parsed.y})`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            type: 'linear',
-                            min: -25,
-                            max: 25,
-                            title: {
-                                display: true,
-                                text: 'Court Position (feet)',
-                                font: { weight: 'bold' }
-                            },
-                            grid: {
-                                color: 'rgba(0,0,0,0.1)'
-                            }
-                        },
-                        y: {
-                            min: 0,
-                            max: 25,
-                            title: {
-                                display: true,
-                                text: 'Distance from Basket (feet)',
-                                font: { weight: 'bold' }
-                            },
-                            grid: {
-                                color: 'rgba(0,0,0,0.1)'
-                            }
-                        }
-                    },
-                    animation: {
-                        duration: 2000,
-                        easing: 'easeOutQuart'
-                    }
-                }
-            });
-        }
-
         function initializeBasketballCourt() {
             const shotData = generateShotData();
             const shotMarkers = document.getElementById('shotMarkers');
