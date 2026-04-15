@@ -5,8 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HoopAI - Elite Basketball Training</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#FF6B35">
+    <meta name="theme-color" content="#FFB4A2">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            /* Soft Pastel Orange Palette */
+            --primary-gradient: linear-gradient(135deg, #FFB4A2 0%, #FFCBA4 100%);
+            --primary-soft: linear-gradient(135deg, #FFE5D9 0%, #FFD4C4 100%);
+            --primary-accent: #FF8A65;
+            --primary-light: #FFF4F1;
+            
+            /* Warm Neutrals */
+            --background-primary: #FAFAFA;
+            --background-secondary: #F5F5F5;
+            --text-primary: #2C2C2C;
+            --text-secondary: #6B6B6B;
+            --text-light: #9B9B9B;
+            --surface: rgba(255, 255, 255, 0.95);
+            --surface-elevated: rgba(255, 255, 255, 1);
+            
+            /* Status Colors */
+            --success: #4ECDC4;
+            --warning: #FFE66D;
+            --error: #FF6B6B;
+            
+            /* Shadows */
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.16);
+            --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.20);
+            
+            /* Animations */
+            --ease-out-cubic: cubic-bezier(0.4, 0, 0.2, 1);
+            --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+            --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -14,10 +48,50 @@
         }
 
         body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-            color: white;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--background-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
             overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Smooth Animations */
+        .smooth-all { transition: all 0.3s var(--ease-out-cubic); }
+        .smooth-transform { transition: transform 0.3s var(--ease-out-cubic); }
+        .tap-scale:active { transform: scale(0.98); }
+        .hover-lift:hover { 
+            transform: translateY(-2px); 
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Loading Animation */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes slideUp {
+            0% { transform: translateY(20px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
         }
 
         .container {
@@ -26,82 +100,161 @@
             padding: 0;
         }
 
+        /* Premium Header */
         .header {
-            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
-            padding: 20px;
+            background: var(--primary-gradient);
+            padding: 24px 20px 32px;
             text-align: center;
-            box-shadow: 0 4px 20px rgba(255, 107, 53, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><defs><radialGradient id="g"><stop offset="20%" stop-color="%23ffffff" stop-opacity="0.1"/><stop offset="50%" stop-color="%23ffffff" stop-opacity="0.05"/></radialGradient></defs><rect width="100%" height="100%" fill="url(%23g)"/></svg>');
+            pointer-events: none;
         }
 
         .logo {
-            font-size: 2.5em;
-            font-weight: bold;
-            margin-bottom: 5px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: white;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            animation: bounceIn 0.8s var(--ease-bounce);
         }
 
         .tagline {
-            font-size: 1.1em;
-            opacity: 0.9;
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 400;
+            animation: slideUp 0.6s var(--ease-out-cubic) 0.2s both;
         }
 
+        /* Premium Navigation */
         .nav-tabs {
             display: flex;
-            background: rgba(0,0,0,0.3);
-            border-radius: 0;
+            background: var(--surface-elevated);
+            margin: 0 16px;
+            border-radius: 16px;
+            padding: 4px;
+            box-shadow: var(--shadow-md);
+            position: relative;
+            top: -16px;
+            animation: slideUp 0.6s var(--ease-out-cubic) 0.4s both;
         }
 
         .nav-tab {
             flex: 1;
-            padding: 15px;
+            padding: 14px 8px;
             text-align: center;
             cursor: pointer;
             border: none;
             background: transparent;
-            color: white;
+            color: var(--text-secondary);
             font-size: 14px;
-            transition: all 0.3s ease;
-            border-bottom: 3px solid transparent;
+            font-weight: 500;
+            border-radius: 12px;
+            position: relative;
+            transition: all 0.3s var(--ease-out-cubic);
         }
 
         .nav-tab.active {
-            background: rgba(255, 107, 53, 0.2);
-            border-bottom-color: #FF6B35;
+            background: var(--primary-gradient);
+            color: white;
+            font-weight: 600;
+            transform: scale(1.02);
         }
 
-        .nav-tab:hover {
-            background: rgba(255, 255, 255, 0.1);
+        .nav-tab:hover:not(.active) {
+            background: var(--primary-light);
+            color: var(--text-primary);
         }
 
         .tab-content {
             display: none;
-            padding: 20px;
+            padding: 24px 20px;
             min-height: calc(100vh - 200px);
+            animation: fadeIn 0.4s var(--ease-out-cubic);
         }
 
         .tab-content.active {
             display: block;
         }
 
+        /* Premium Cards */
+        .card {
+            background: var(--surface-elevated);
+            border-radius: 20px;
+            padding: 24px;
+            margin: 16px 0;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(255, 180, 162, 0.1);
+            transition: all 0.3s var(--ease-out-cubic);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--primary-gradient);
+            transform: scaleX(0);
+            transition: transform 0.3s var(--ease-out-cubic);
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .card:hover::before {
+            transform: scaleX(1);
+        }
+
+        /* Camera Section */
         .camera-section {
             text-align: center;
-            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .section-subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            font-weight: 400;
         }
 
         .video-container {
             position: relative;
             width: 100%;
-            max-width: 400px;
-            margin: 0 auto 20px;
-            border-radius: 15px;
+            max-width: 380px;
+            margin: 0 auto 24px;
+            border-radius: 24px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: var(--shadow-lg);
+            background: var(--background-secondary);
         }
 
         #videoElement {
             width: 100%;
             height: auto;
             display: block;
+            border-radius: 24px;
         }
 
         .camera-overlay {
@@ -116,257 +269,477 @@
 
         .shooting-zone {
             position: absolute;
-            top: 20%;
+            top: 25%;
             left: 50%;
             transform: translateX(-50%);
             width: 120px;
             height: 120px;
-            border: 3px solid #FF6B35;
+            border: 3px solid var(--primary-accent);
             border-radius: 50%;
-            opacity: 0.7;
+            opacity: 0.8;
             animation: pulse 2s infinite;
         }
 
-        @keyframes pulse {
-            0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.7; }
-            50% { transform: translateX(-50%) scale(1.1); opacity: 1; }
+        .shooting-zone::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px;
+            height: 8px;
+            background: var(--primary-accent);
+            border-radius: 50%;
         }
 
+        /* Premium Buttons */
         .controls {
             display: flex;
             justify-content: center;
-            gap: 15px;
-            margin: 20px 0;
+            gap: 12px;
+            margin: 24px 0;
             flex-wrap: wrap;
         }
 
         .btn {
-            padding: 12px 24px;
+            padding: 14px 28px;
             border: none;
-            border-radius: 25px;
+            border-radius: 16px;
             cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.3s var(--ease-out-cubic);
+            text-transform: none;
+            letter-spacing: 0.025em;
+            position: relative;
+            overflow: hidden;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+            background: var(--primary-gradient);
             color: white;
-            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+            box-shadow: var(--shadow-md);
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.6);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0) scale(0.98);
         }
 
         .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: var(--surface-elevated);
+            color: var(--text-primary);
+            border: 2px solid rgba(255, 138, 101, 0.2);
+            box-shadow: var(--shadow-sm);
         }
 
         .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: var(--primary-light);
+            border-color: var(--primary-accent);
+            transform: translateY(-1px);
         }
 
-        .analysis-panel {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 15px;
-            padding: 20px;
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Status Indicator */
+        .status-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 16px;
+            background: var(--primary-light);
+            border-radius: 16px;
             margin: 20px 0;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .metric {
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .status-ready { background: var(--success); }
+        .status-recording { 
+            background: var(--error);
+            animation: pulse 1s infinite;
+        }
+        .status-analyzing { 
+            background: var(--warning);
+            animation: pulse 1.5s infinite;
+        }
+
+        .status-text {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        /* Analysis Metrics */
+        .metrics-grid {
+            display: grid;
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .metric-card {
+            background: var(--surface-elevated);
+            border-radius: 16px;
+            padding: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin: 15px 0;
-            padding: 10px;
-            background: rgba(0,0,0,0.2);
-            border-radius: 8px;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s var(--ease-out-cubic);
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .metric-info {
+            flex: 1;
         }
 
         .metric-label {
-            font-weight: bold;
+            font-weight: 500;
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 4px;
         }
 
         .metric-value {
-            font-size: 1.2em;
-            color: #FF6B35;
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
-        .score-circle {
-            width: 80px;
-            height: 80px;
+        .metric-progress {
+            width: 60px;
+            height: 60px;
+            position: relative;
+        }
+
+        .progress-circle {
+            width: 100%;
+            height: 100%;
             border-radius: 50%;
-            background: conic-gradient(#FF6B35 0deg 252deg, rgba(255,255,255,0.1) 252deg 360deg);
+            background: conic-gradient(var(--primary-accent) 0deg 252deg, #f0f0f0 252deg 360deg);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5em;
-            font-weight: bold;
-            margin: 0 auto;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            position: relative;
+        }
+
+        .progress-circle::before {
+            content: '';
+            position: absolute;
+            width: 45px;
+            height: 45px;
+            background: var(--surface-elevated);
+            border-radius: 50%;
+            z-index: -1;
+        }
+
+        /* Trainer Cards */
+        .trainer-grid {
+            display: grid;
+            gap: 16px;
+            margin: 20px 0;
         }
 
         .trainer-card {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 15px;
+            background: var(--surface-elevated);
+            border-radius: 20px;
             padding: 20px;
-            margin: 15px 0;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 16px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s var(--ease-out-cubic);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(255, 180, 162, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .trainer-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 180, 162, 0.1), transparent);
+            transition: left 0.6s var(--ease-out-cubic);
+        }
+
+        .trainer-card:hover::before {
+            left: 100%;
         }
 
         .trainer-card:hover {
-            background: rgba(255, 107, 53, 0.1);
-            transform: translateY(-2px);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
         }
 
         .trainer-avatar {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #FF6B35, #F7931E);
-            border-radius: 50%;
+            width: 64px;
+            height: 64px;
+            background: var(--primary-gradient);
+            border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5em;
-            font-weight: bold;
+            font-size: 1.5rem;
+            color: white;
+            font-weight: 600;
+            box-shadow: var(--shadow-md);
         }
 
-        .trainer-info h3 {
-            margin: 0 0 5px 0;
-            color: #FF6B35;
+        .trainer-info {
+            flex: 1;
         }
 
-        .trainer-info p {
-            margin: 0;
-            opacity: 0.8;
-            font-size: 0.9em;
+        .trainer-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
         }
 
-        .drill-duration {
-            background: rgba(255, 107, 53, 0.2);
-            color: #FF6B35;
-            padding: 5px 10px;
-            border-radius: 15px;
-            font-size: 0.8em;
-            font-weight: bold;
+        .trainer-specialty {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.4;
         }
 
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-            overflow: hidden;
-            margin: 10px 0;
+        .trainer-duration {
+            background: var(--primary-soft);
+            color: var(--primary-accent);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
         }
 
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #FF6B35, #F7931E);
-            border-radius: 4px;
-            transition: width 0.5s ease;
-        }
-
+        /* Progress Charts */
         .chart-container {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 15px;
-            padding: 20px;
+            background: var(--surface-elevated);
+            border-radius: 20px;
+            padding: 24px;
             margin: 20px 0;
             text-align: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-primary);
         }
 
         .shot-chart {
             width: 100%;
-            max-width: 300px;
-            height: 200px;
-            margin: 0 auto;
-            background: rgba(0,0,0,0.3);
-            border-radius: 10px;
+            max-width: 320px;
+            height: 240px;
+            margin: 0 auto 16px;
+            background: linear-gradient(135deg, #f8f8f8, #f0f0f0);
+            border-radius: 16px;
             position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
+        }
+
+        .shot-chart::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 1px;
+            background: rgba(0,0,0,0.1);
         }
 
         .shot-dot {
             position: absolute;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #FF6B35;
-            box-shadow: 0 0 10px rgba(255, 107, 53, 0.6);
-        }
-
-        .recommendation {
-            background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(247, 147, 30, 0.1));
-            border-left: 4px solid #FF6B35;
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 0 10px 10px 0;
-        }
-
-        .status-indicator {
-            display: inline-block;
             width: 10px;
             height: 10px;
             border-radius: 50%;
-            margin-right: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            transition: all 0.3s var(--ease-out-cubic);
         }
 
-        .status-recording { background: #ff4444; animation: blink 1s infinite; }
-        .status-ready { background: #44ff44; }
-        .status-analyzing { background: #ffaa44; animation: pulse 1s infinite; }
-
-        @keyframes blink {
-            0%, 50% { opacity: 1; }
-            51%, 100% { opacity: 0.3; }
+        .shot-dot.made {
+            background: var(--success);
         }
 
-        .mobile-only {
-            display: block;
+        .shot-dot.missed {
+            background: var(--error);
         }
 
-        .desktop-only {
-            display: none;
+        .shot-dot:hover {
+            transform: scale(1.3);
         }
 
-        @media (min-width: 768px) {
-            .mobile-only { display: none; }
-            .desktop-only { display: block; }
-            
-            .container {
-                max-width: 1200px;
-                padding: 0 20px;
-            }
-            
-            .controls {
-                justify-content: center;
-            }
+        .chart-legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        /* Recommendations */
+        .recommendation {
+            background: linear-gradient(135deg, rgba(255, 180, 162, 0.1), rgba(255, 203, 164, 0.1));
+            border-left: 4px solid var(--primary-accent);
+            border-radius: 0 16px 16px 0;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .recommendation::before {
+            content: '💡';
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 1.2rem;
+        }
+
+        .recommendation h3 {
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .recommendation p {
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .recommendation p:last-child {
+            margin-bottom: 0;
+        }
+
+        .recommendation strong {
+            color: var(--primary-accent);
+        }
+
+        /* Workout Player */
+        .workout-player {
+            background: var(--surface-elevated);
+            border-radius: 20px;
+            padding: 24px;
+            margin: 20px 0;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .workout-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            text-align: center;
         }
 
         .workout-video {
             width: 100%;
             max-width: 400px;
             margin: 0 auto;
-            border-radius: 10px;
+            border-radius: 16px;
             overflow: hidden;
+        }
+
+        /* Responsive Design */
+        @media (min-width: 768px) {
+            .container {
+                max-width: 1200px;
+                padding: 0 24px;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .trainer-grid {
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            }
+            
+            .nav-tabs {
+                margin: 0 40px;
+            }
         }
 
         .hidden {
             display: none !important;
+        }
+
+        /* Accessibility */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Focus States */
+        .btn:focus, .nav-tab:focus {
+            outline: 2px solid var(--primary-accent);
+            outline-offset: 2px;
         }
     </style>
 </head>
@@ -387,8 +760,8 @@
         <!-- Record Tab -->
         <div id="record" class="tab-content active">
             <div class="camera-section">
-                <h2>Shot Analysis Camera</h2>
-                <p>Position yourself in the shooting zone and take your shot</p>
+                <h2 class="section-title">Shot Analysis Camera</h2>
+                <p class="section-subtitle">Position yourself in the shooting zone and perfect your form</p>
                 
                 <div class="video-container">
                     <video id="videoElement" autoplay muted playsinline></video>
@@ -398,161 +771,221 @@
                 </div>
                 
                 <div class="controls">
-                    <button class="btn btn-primary" id="startCamera">Start Camera</button>
-                    <button class="btn btn-secondary" id="recordShot" disabled>Record Shot</button>
-                    <button class="btn btn-secondary" id="stopRecording" disabled>Stop Recording</button>
+                    <button class="btn btn-primary" id="startCamera">
+                        <span>📹</span> Start Camera
+                    </button>
+                    <button class="btn btn-secondary" id="recordShot" disabled>
+                        <span>🔴</span> Record Shot
+                    </button>
+                    <button class="btn btn-secondary" id="stopRecording" disabled>
+                        <span>⏹️</span> Stop Recording
+                    </button>
                 </div>
                 
-                <div id="recordingStatus">
-                    <span class="status-indicator status-ready"></span>
-                    Ready to record
+                <div class="status-section" id="recordingStatus">
+                    <div class="status-indicator status-ready"></div>
+                    <p class="status-text">Ready to record your next shot</p>
                 </div>
             </div>
         </div>
 
         <!-- Analysis Tab -->
         <div id="analyze" class="tab-content">
-            <div class="analysis-panel">
-                <h2>Latest Shot Analysis</h2>
+            <div class="card">
+                <h2 class="section-title">Latest Shot Analysis</h2>
                 
-                <div class="score-circle">
-                    <span id="overallScore">85</span>
-                </div>
-                
-                <div class="metric">
-                    <span class="metric-label">Release Point</span>
-                    <span class="metric-value">92/100</span>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: 92%"></div>
+                <div style="text-align: center; margin: 24px 0;">
+                    <div class="progress-circle" style="width: 100px; height: 100px; margin: 0 auto;">
+                        <span id="overallScore" style="font-size: 1.5rem; font-weight: 700;">85</span>
+                    </div>
+                    <p style="margin-top: 12px; color: var(--text-secondary);">Overall Score</p>
                 </div>
                 
-                <div class="metric">
-                    <span class="metric-label">Arc Height</span>
-                    <span class="metric-value">78/100</span>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: 78%"></div>
-                </div>
-                
-                <div class="metric">
-                    <span class="metric-label">Follow Through</span>
-                    <span class="metric-value">89/100</span>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: 89%"></div>
-                </div>
-                
-                <div class="metric">
-                    <span class="metric-label">Balance & Footwork</span>
-                    <span class="metric-value">81/100</span>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: 81%"></div>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-info">
+                            <div class="metric-label">Release Point</div>
+                            <div class="metric-value">92/100</div>
+                        </div>
+                        <div class="metric-progress">
+                            <div class="progress-circle" style="background: conic-gradient(var(--success) 0deg 331deg, #f0f0f0 331deg 360deg);">
+                                92
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <div class="metric-info">
+                            <div class="metric-label">Arc Height</div>
+                            <div class="metric-value">78/100</div>
+                        </div>
+                        <div class="metric-progress">
+                            <div class="progress-circle" style="background: conic-gradient(var(--warning) 0deg 281deg, #f0f0f0 281deg 360deg);">
+                                78
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <div class="metric-info">
+                            <div class="metric-label">Follow Through</div>
+                            <div class="metric-value">89/100</div>
+                        </div>
+                        <div class="metric-progress">
+                            <div class="progress-circle" style="background: conic-gradient(var(--success) 0deg 320deg, #f0f0f0 320deg 360deg);">
+                                89
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <div class="metric-info">
+                            <div class="metric-label">Balance & Footwork</div>
+                            <div class="metric-value">81/100</div>
+                        </div>
+                        <div class="metric-progress">
+                            <div class="progress-circle" style="background: conic-gradient(var(--primary-accent) 0deg 291deg, #f0f0f0 291deg 360deg);">
+                                81
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
             <div class="recommendation">
-                <h3>💡 AI Recommendation</h3>
-                <p><strong>Focus Area:</strong> Arc Height</p>
-                <p>Your shots are coming in too flat. Try extending your shooting arm higher and adding more arc to your shots. Aim for a 45-50 degree launch angle.</p>
+                <h3>🎯 Focus Area: Arc Height</h3>
+                <p><strong>Current Performance:</strong> Your shots are coming in at a 38° angle - slightly flatter than ideal.</p>
+                <p><strong>Recommendation:</strong> Extend your shooting arm higher and add 7-12 degrees more arc. Aim for the 45-50° sweet spot for optimal entry angle.</p>
+                <p><strong>Next Steps:</strong> Practice with the "High Arc Drill" in your training section.</p>
             </div>
             
             <div class="recommendation">
-                <h3>🎯 This Week's Goal</h3>
-                <p>Complete 3 form shooting sessions focusing on arc consistency. Target: Increase arc score to 85+</p>
+                <h3>⚡ This Week's Goal</h3>
+                <p><strong>Target:</strong> Increase arc consistency to 85+ through focused form shooting.</p>
+                <p><strong>Plan:</strong> Complete 3 sessions with Coach Mike's "Arc Training" program.</p>
+                <p><strong>Progress:</strong> 1/3 sessions completed • Next session: Tomorrow</p>
             </div>
         </div>
 
         <!-- Training Tab -->
         <div id="train" class="tab-content">
-            <h2>Elite Trainer Workouts</h2>
+            <h2 class="section-title">Elite Trainer Workouts</h2>
+            <p class="section-subtitle">Learn from the best coaches in basketball</p>
             
-            <div class="trainer-card" onclick="startWorkout('form-basics')">
-                <div class="trainer-avatar">CM</div>
-                <div class="trainer-info">
-                    <h3>Coach Mike - Form Fundamentals</h3>
-                    <p>Master the BEEF method and perfect your shooting mechanics</p>
+            <div class="trainer-grid">
+                <div class="trainer-card" onclick="startWorkout('form-basics')">
+                    <div class="trainer-avatar">CM</div>
+                    <div class="trainer-info">
+                        <div class="trainer-name">Coach Mike Thompson</div>
+                        <div class="trainer-specialty">Form Fundamentals & BEEF Method<br>Perfect your shooting mechanics from scratch</div>
+                    </div>
+                    <div class="trainer-duration">18 min</div>
                 </div>
-                <div class="drill-duration">18 min</div>
+                
+                <div class="trainer-card" onclick="startWorkout('arc-training')">
+                    <div class="trainer-avatar">SW</div>
+                    <div class="trainer-info">
+                        <div class="trainer-name">Sarah Williams</div>
+                        <div class="trainer-specialty">Arc Consistency Training<br>Develop the perfect 45-50 degree release</div>
+                    </div>
+                    <div class="trainer-duration">22 min</div>
+                </div>
+                
+                <div class="trainer-card" onclick="startWorkout('game-shots')">
+                    <div class="trainer-avatar">DJ</div>
+                    <div class="trainer-info">
+                        <div class="trainer-name">DJ Parker</div>
+                        <div class="trainer-specialty">Game Situation Shooting<br>Practice contested shots & game movements</div>
+                    </div>
+                    <div class="trainer-duration">25 min</div>
+                </div>
+                
+                <div class="trainer-card" onclick="startWorkout('mental-game')">
+                    <div class="trainer-avatar">AS</div>
+                    <div class="trainer-info">
+                        <div class="trainer-name">Alan Stone Jr.</div>
+                        <div class="trainer-specialty">Mental Toughness Training<br>Build confidence for clutch moments</div>
+                    </div>
+                    <div class="trainer-duration">15 min</div>
+                </div>
             </div>
             
-            <div class="trainer-card" onclick="startWorkout('arc-training')">
-                <div class="trainer-avatar">SW</div>
-                <div class="trainer-info">
-                    <h3>Sarah Williams - Arc Training</h3>
-                    <p>Develop consistent shot arc and release point</p>
-                </div>
-                <div class="drill-duration">22 min</div>
-            </div>
-            
-            <div class="trainer-card" onclick="startWorkout('game-shots')">
-                <div class="trainer-avatar">DJ</div>
-                <div class="trainer-info">
-                    <h3>DJ Parker - Game Situation Shooting</h3>
-                    <p>Practice contested shots and game-speed movements</p>
-                </div>
-                <div class="drill-duration">25 min</div>
-            </div>
-            
-            <div class="trainer-card" onclick="startWorkout('mental-game')">
-                <div class="trainer-avatar">AS</div>
-                <div class="trainer-info">
-                    <h3>Alan Stone - Mental Training</h3>
-                    <p>Build confidence and mental toughness for clutch shots</p>
-                </div>
-                <div class="drill-duration">15 min</div>
-            </div>
-            
-            <div id="workoutPlayer" class="analysis-panel hidden">
-                <h3 id="workoutTitle">Workout Player</h3>
-                <video class="workout-video" controls>
-                    <source src="" type="video/mp4">
-                    Your browser does not support the video tag.
-                </video>
-                <div class="controls">
-                    <button class="btn btn-secondary" onclick="closeWorkout()">Close Workout</button>
+            <div id="workoutPlayer" class="workout-player hidden">
+                <h3 class="workout-title" id="workoutTitle">Workout Player</h3>
+                <div style="text-align: center;">
+                    <div style="width: 100%; max-width: 400px; height: 225px; margin: 0 auto 20px; background: linear-gradient(135deg, #f0f0f0, #e0e0e0); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: var(--text-secondary);">
+                        <div style="text-align: center;">
+                            <div style="font-size: 3rem; margin-bottom: 8px;">🎥</div>
+                            <p>Professional training video</p>
+                            <p style="font-size: 14px; margin-top: 4px;">Connect with real trainer content</p>
+                        </div>
+                    </div>
+                    <div class="controls">
+                        <button class="btn btn-secondary" onclick="closeWorkout()">Close Workout</button>
+                        <button class="btn btn-primary" onclick="markComplete()">Mark Complete</button>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Progress Tab -->
         <div id="progress" class="tab-content">
-            <h2>Your Progress</h2>
+            <h2 class="section-title">Your Progress</h2>
             
             <div class="chart-container">
-                <h3>Shot Chart</h3>
+                <h3 class="chart-title">Shot Chart - Last 30 Days</h3>
                 <div class="shot-chart" id="shotChart">
                     <!-- Shot dots will be dynamically added here -->
                 </div>
-                <p>🟢 Made shots | 🔴 Missed shots</p>
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: var(--success);"></div>
+                        <span>Made shots (67%)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: var(--error);"></div>
+                        <span>Missed shots (33%)</span>
+                    </div>
+                </div>
             </div>
             
-            <div class="analysis-panel">
-                <h3>Weekly Stats</h3>
-                <div class="metric">
-                    <span class="metric-label">Sessions Completed</span>
-                    <span class="metric-value">5/7</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">Shots Analyzed</span>
-                    <span class="metric-value">147</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">Average Score</span>
-                    <span class="metric-value">82/100</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">Improvement</span>
-                    <span class="metric-value">+12%</span>
+            <div class="card">
+                <h3 class="section-title">Weekly Performance</h3>
+                
+                <div class="metrics-grid" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="metric-card">
+                        <div class="metric-info">
+                            <div class="metric-label">Sessions Completed</div>
+                            <div class="metric-value">5/7</div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-info">
+                            <div class="metric-label">Shots Analyzed</div>
+                            <div class="metric-value">147</div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-info">
+                            <div class="metric-label">Average Score</div>
+                            <div class="metric-value">82/100</div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-info">
+                            <div class="metric-label">Improvement</div>
+                            <div class="metric-value">+12%</div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
             <div class="recommendation">
-                <h3>🏆 Achievements</h3>
-                <p>• 5-Day Training Streak</p>
-                <p>• Form Score Above 80</p>
-                <p>• 100 Shots Analyzed</p>
+                <h3>🏆 Recent Achievements</h3>
+                <p>• <strong>5-Day Training Streak</strong> - Consistency is key!</p>
+                <p>• <strong>Form Score Above 80</strong> - Your mechanics are improving</p>
+                <p>• <strong>100 Shots Analyzed</strong> - Data-driven improvement</p>
+                <p>• <strong>Arc Improvement Streak</strong> - 3 sessions in a row with better arc</p>
             </div>
         </div>
     </div>
@@ -563,27 +996,34 @@
         let isRecording = false;
         let recordedChunks = [];
 
-        // Tab switching
+        // Enhanced tab switching with animations
         function showTab(tabName) {
-            // Hide all tabs
+            // Remove active classes with fade out
             document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
+                if (tab.classList.contains('active')) {
+                    tab.style.animation = 'fadeIn 0.3s var(--ease-out-cubic) reverse';
+                    setTimeout(() => {
+                        tab.classList.remove('active');
+                    }, 150);
+                }
             });
+            
             document.querySelectorAll('.nav-tab').forEach(tab => {
                 tab.classList.remove('active');
             });
             
-            // Show selected tab
-            document.getElementById(tabName).classList.add('active');
-            event.target.classList.add('active');
+            // Show selected tab with fade in
+            setTimeout(() => {
+                document.getElementById(tabName).classList.add('active');
+                event.target.classList.add('active');
+            }, 200);
         }
 
-        // Camera functionality
+        // Enhanced camera functionality
         const videoElement = document.getElementById('videoElement');
         const startCameraBtn = document.getElementById('startCamera');
         const recordShotBtn = document.getElementById('recordShot');
         const stopRecordingBtn = document.getElementById('stopRecording');
-        const recordingStatus = document.getElementById('recordingStatus');
 
         startCameraBtn.addEventListener('click', startCamera);
         recordShotBtn.addEventListener('click', startRecording);
@@ -591,6 +1031,10 @@
 
         async function startCamera() {
             try {
+                // Add loading state
+                startCameraBtn.innerHTML = '<span style="animation: pulse 1s infinite;">📹</span> Starting...';
+                startCameraBtn.disabled = true;
+                
                 stream = await navigator.mediaDevices.getUserMedia({
                     video: { 
                         facingMode: 'environment',
@@ -601,13 +1045,20 @@
                 });
                 
                 videoElement.srcObject = stream;
-                startCameraBtn.disabled = true;
-                recordShotBtn.disabled = false;
                 
-                updateStatus('ready', 'Ready to record');
+                // Animate button changes
+                setTimeout(() => {
+                    startCameraBtn.style.display = 'none';
+                    recordShotBtn.disabled = false;
+                    recordShotBtn.style.animation = 'bounceIn 0.6s var(--ease-bounce)';
+                    updateStatus('ready', '✅ Camera ready - Position yourself in the zone');
+                }, 500);
+                
             } catch (error) {
                 console.error('Error accessing camera:', error);
-                alert('Unable to access camera. Please check permissions.');
+                startCameraBtn.innerHTML = '<span>📹</span> Start Camera';
+                startCameraBtn.disabled = false;
+                updateStatus('error', '❌ Camera access denied - Please check permissions');
             }
         }
 
@@ -624,23 +1075,26 @@
                 
                 mediaRecorder.onstop = () => {
                     const blob = new Blob(recordedChunks, { type: 'video/webm' });
-                    // Here you would normally send the video for AI analysis
                     analyzeShot(blob);
                 };
                 
                 mediaRecorder.start();
                 isRecording = true;
                 
+                // Animate button states
                 recordShotBtn.disabled = true;
+                recordShotBtn.style.animation = 'pulse 1s infinite';
                 stopRecordingBtn.disabled = false;
-                updateStatus('recording', 'Recording shot...');
+                stopRecordingBtn.style.animation = 'bounceIn 0.6s var(--ease-bounce)';
                 
-                // Auto-stop after 10 seconds
+                updateStatus('recording', '🔴 Recording shot - Hold steady!');
+                
+                // Auto-stop after 8 seconds
                 setTimeout(() => {
                     if (isRecording) {
                         stopRecording();
                     }
-                }, 10000);
+                }, 8000);
             }
         }
 
@@ -649,82 +1103,100 @@
                 mediaRecorder.stop();
                 isRecording = false;
                 
+                // Reset button states
                 recordShotBtn.disabled = false;
+                recordShotBtn.style.animation = '';
                 stopRecordingBtn.disabled = true;
-                updateStatus('analyzing', 'Analyzing shot...');
+                stopRecordingBtn.style.animation = '';
                 
-                // Simulate analysis time
+                updateStatus('analyzing', '🤖 AI analyzing your shot...');
+                
+                // Enhanced analysis animation
                 setTimeout(() => {
-                    updateStatus('ready', 'Analysis complete - Check Analysis tab');
-                    // Auto-switch to analysis tab
-                    showTab('analyze');
-                    document.querySelector('[onclick="showTab(\'analyze\')"]').classList.add('active');
+                    updateStatus('ready', '✨ Analysis complete! Check your results');
+                    
+                    // Auto-switch to analysis tab with celebration
+                    setTimeout(() => {
+                        showTab('analyze');
+                        document.querySelector('[onclick="showTab(\'analyze\')"]').classList.add('active');
+                        
+                        // Celebration effect
+                        confettiEffect();
+                    }, 1000);
                 }, 3000);
             }
         }
 
         function updateStatus(type, message) {
-            const indicator = recordingStatus.querySelector('.status-indicator');
+            const statusSection = document.getElementById('recordingStatus');
+            const indicator = statusSection.querySelector('.status-indicator');
+            const text = statusSection.querySelector('.status-text');
+            
             indicator.className = `status-indicator status-${type}`;
-            recordingStatus.innerHTML = `<span class="status-indicator status-${type}"></span>${message}`;
+            text.textContent = message;
+            
+            // Add pulse animation to status section
+            statusSection.style.animation = 'bounceIn 0.4s var(--ease-bounce)';
+            setTimeout(() => {
+                statusSection.style.animation = '';
+            }, 400);
         }
 
         function analyzeShot(videoBlob) {
-            // Simulate AI analysis
             console.log('Analyzing shot video:', videoBlob);
             
-            // Update analysis scores with some randomness
+            // Simulate progressive AI analysis with realistic delays
             setTimeout(() => {
                 const scores = {
-                    release: Math.floor(Math.random() * 20) + 80,
-                    arc: Math.floor(Math.random() * 25) + 70,
-                    followThrough: Math.floor(Math.random() * 20) + 80,
-                    balance: Math.floor(Math.random() * 20) + 75
+                    release: Math.floor(Math.random() * 15) + 85,
+                    arc: Math.floor(Math.random() * 20) + 75,
+                    followThrough: Math.floor(Math.random() * 15) + 80,
+                    balance: Math.floor(Math.random() * 15) + 80
                 };
                 
                 const overall = Math.floor((scores.release + scores.arc + scores.followThrough + scores.balance) / 4);
                 
                 updateAnalysisScores(scores, overall);
-            }, 2000);
+            }, 2500);
         }
 
         function updateAnalysisScores(scores, overall) {
+            // Animate score updates
             document.getElementById('overallScore').textContent = overall;
             
-            const metrics = document.querySelectorAll('.metric .metric-value');
-            const progressBars = document.querySelectorAll('.progress-fill');
+            // Update metrics with staggered animations
+            const metricCards = document.querySelectorAll('.metric-card');
+            const values = [scores.release, scores.arc, scores.followThrough, scores.balance];
             
-            metrics[0].textContent = `${scores.release}/100`;
-            metrics[1].textContent = `${scores.arc}/100`;
-            metrics[2].textContent = `${scores.followThrough}/100`;
-            metrics[3].textContent = `${scores.balance}/100`;
-            
-            progressBars[0].style.width = `${scores.release}%`;
-            progressBars[1].style.width = `${scores.arc}%`;
-            progressBars[2].style.width = `${scores.followThrough}%`;
-            progressBars[3].style.width = `${scores.balance}%`;
+            metricCards.forEach((card, index) => {
+                setTimeout(() => {
+                    const valueEl = card.querySelector('.metric-value');
+                    valueEl.textContent = `${values[index]}/100`;
+                    card.style.animation = 'bounceIn 0.6s var(--ease-bounce)';
+                }, index * 200);
+            });
         }
 
-        // Training functionality
+        // Enhanced training functionality
         function startWorkout(workoutId) {
             const workoutPlayer = document.getElementById('workoutPlayer');
             const workoutTitle = document.getElementById('workoutTitle');
             
             const workouts = {
                 'form-basics': {
-                    title: 'Coach Mike - Form Fundamentals',
+                    title: 'Coach Mike Thompson - Form Fundamentals',
                     description: 'Master the BEEF method and shooting mechanics'
                 },
                 'arc-training': {
-                    title: 'Sarah Williams - Arc Training',
-                    description: 'Develop consistent shot arc and release'
+                    title: 'Sarah Williams - Arc Consistency Training',
+                    description: 'Develop the perfect 45-50 degree release'
                 },
                 'game-shots': {
                     title: 'DJ Parker - Game Situation Shooting',
                     description: 'Practice contested shots and game movements'
                 },
                 'mental-game': {
-                    title: 'Alan Stone - Mental Training',
+                    title: 'Alan Stone Jr. - Mental Toughness',
                     description: 'Build confidence for clutch shooting'
                 }
             };
@@ -732,61 +1204,153 @@
             const workout = workouts[workoutId];
             workoutTitle.textContent = workout.title;
             
-            // Show workout player
+            // Smooth reveal animation
             workoutPlayer.classList.remove('hidden');
+            workoutPlayer.style.animation = 'slideUp 0.6s var(--ease-out-cubic)';
             
-            // Simulate video content (in real app, this would be actual training videos)
-            console.log(`Starting workout: ${workout.title}`);
+            // Scroll to workout player
+            workoutPlayer.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
         function closeWorkout() {
-            document.getElementById('workoutPlayer').classList.add('hidden');
+            const workoutPlayer = document.getElementById('workoutPlayer');
+            workoutPlayer.style.animation = 'fadeIn 0.3s var(--ease-out-cubic) reverse';
+            setTimeout(() => {
+                workoutPlayer.classList.add('hidden');
+            }, 300);
         }
 
-        // Initialize shot chart
+        function markComplete() {
+            // Celebration animation
+            confettiEffect();
+            updateStatus('ready', '🎉 Workout completed! Great job!');
+            setTimeout(closeWorkout, 1500);
+        }
+
+        // Enhanced shot chart initialization
         function initializeShotChart() {
             const shotChart = document.getElementById('shotChart');
             
-            // Simulate shot data
+            // More realistic shot distribution
             const shots = [
-                { x: 60, y: 40, made: true },
-                { x: 45, y: 60, made: false },
-                { x: 70, y: 30, made: true },
-                { x: 55, y: 50, made: true },
-                { x: 40, y: 70, made: false },
-                { x: 65, y: 45, made: true },
-                { x: 50, y: 35, made: true },
-                { x: 75, y: 55, made: false }
+                { x: 55, y: 45, made: true },
+                { x: 42, y: 65, made: false },
+                { x: 68, y: 35, made: true },
+                { x: 51, y: 55, made: true },
+                { x: 38, y: 70, made: false },
+                { x: 62, y: 40, made: true },
+                { x: 47, y: 38, made: true },
+                { x: 72, y: 58, made: false },
+                { x: 59, y: 42, made: true },
+                { x: 45, y: 62, made: true },
+                { x: 35, y: 75, made: false },
+                { x: 66, y: 37, made: true }
             ];
             
-            shots.forEach(shot => {
-                const dot = document.createElement('div');
-                dot.className = 'shot-dot';
-                dot.style.left = `${shot.x}%`;
-                dot.style.top = `${shot.y}%`;
-                dot.style.background = shot.made ? '#44ff44' : '#ff4444';
-                shotChart.appendChild(dot);
+            shots.forEach((shot, index) => {
+                setTimeout(() => {
+                    const dot = document.createElement('div');
+                    dot.className = 'shot-dot';
+                    dot.classList.add(shot.made ? 'made' : 'missed');
+                    dot.style.left = `${shot.x}%`;
+                    dot.style.top = `${shot.y}%`;
+                    dot.style.animation = `bounceIn 0.6s var(--ease-bounce)`;
+                    shotChart.appendChild(dot);
+                }, index * 100);
             });
         }
 
-        // Initialize app
+        // Confetti celebration effect
+        function confettiEffect() {
+            const colors = ['#FF8A65', '#4ECDC4', '#FFE66D', '#FF6B6B'];
+            const confettiCount = 50;
+            
+            for (let i = 0; i < confettiCount; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.style.cssText = `
+                        position: fixed;
+                        top: -10px;
+                        left: ${Math.random() * 100}%;
+                        width: 8px;
+                        height: 8px;
+                        background: ${colors[Math.floor(Math.random() * colors.length)]};
+                        border-radius: 50%;
+                        pointer-events: none;
+                        z-index: 1000;
+                        animation: confettiFall 3s linear forwards;
+                    `;
+                    
+                    document.body.appendChild(confetti);
+                    
+                    setTimeout(() => confetti.remove(), 3000);
+                }, i * 50);
+            }
+        }
+
+        // Add confetti animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes confettiFall {
+                to {
+                    transform: translateY(100vh) rotate(360deg);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Initialize app with enhanced animations
         document.addEventListener('DOMContentLoaded', () => {
-            initializeShotChart();
+            // Stagger initialization animations
+            setTimeout(() => initializeShotChart(), 500);
             
             // Register service worker for PWA
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('/sw.js');
             }
+            
+            // Add intersection observer for scroll animations
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.animation = 'slideUp 0.6s var(--ease-out-cubic)';
+                    }
+                });
+            }, observerOptions);
+            
+            // Observe cards for scroll animations
+            document.querySelectorAll('.card, .trainer-card, .metric-card').forEach(el => {
+                observer.observe(el);
+            });
         });
 
-        // Handle orientation changes on mobile
+        // Handle orientation changes with smooth transitions
         window.addEventListener('orientationchange', () => {
             setTimeout(() => {
                 if (stream) {
-                    // Restart camera to adjust to new orientation
                     videoElement.srcObject = stream;
+                    videoElement.style.animation = 'fadeIn 0.5s var(--ease-out-cubic)';
                 }
             }, 500);
+        });
+
+        // Enhanced touch feedback for mobile
+        document.addEventListener('touchstart', (e) => {
+            if (e.target.classList.contains('btn') || e.target.classList.contains('trainer-card')) {
+                e.target.style.transform = 'scale(0.98)';
+            }
+        });
+
+        document.addEventListener('touchend', (e) => {
+            if (e.target.classList.contains('btn') || e.target.classList.contains('trainer-card')) {
+                e.target.style.transform = '';
+            }
         });
     </script>
 </body>
