@@ -1221,6 +1221,43 @@
     }
     .header-avatar:hover { transform: scale(1.1); }
 
+
+    /* ─── SHOT TYPE SELECTOR (Feature #3) ───────────────── */
+    .shot-type-row {
+        display: flex; gap: 8px; margin: 16px 0 4px;
+        overflow-x: auto; padding-bottom: 4px;
+        scrollbar-width: none;
+    }
+    .shot-type-row::-webkit-scrollbar { display: none; }
+    .shot-pill {
+        display: flex; align-items: center; gap: 6px;
+        padding: 9px 16px; border-radius: 30px;
+        font-size: 13px; font-weight: 600;
+        white-space: nowrap; cursor: pointer; border: none;
+        background: var(--surface2); color: var(--text-2);
+        border: 1.5px solid var(--border);
+        transition: all 0.2s var(--spring);
+        flex-shrink: 0;
+    }
+    .shot-pill:hover { border-color: var(--brand-soft); color: var(--text-1); }
+    .shot-pill.active {
+        background: var(--brand); color: #fff;
+        border-color: var(--brand);
+        transform: scale(1.06);
+        box-shadow: 0 4px 16px rgba(255,107,53,0.35);
+    }
+    .shot-type-label {
+        font-size: 11px; font-weight: 600; color: var(--text-3);
+        text-transform: uppercase; letter-spacing: 0.8px;
+        margin-bottom: 6px; margin-top: 20px;
+    }
+    .current-shot-badge {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 5px 12px; border-radius: 20px;
+        background: var(--brand-subtle); color: var(--brand);
+        font-size: 12px; font-weight: 600; margin-top: 8px;
+    }
+
 </style>
 </head>
 <body>
@@ -1401,6 +1438,15 @@
                 </div>
             </div>
 
+
+            <!-- Shot Type Selector -->
+            <div class="shot-type-label">Shot Type</div>
+            <div class="shot-type-row" id="shotTypeRow">
+                <button class="shot-pill active" onclick="selectShotType(this,'layup')" data-type="layup">🏃 Layup</button>
+                <button class="shot-pill" onclick="selectShotType(this,'midrange')" data-type="midrange">💫 Mid-Range</button>
+                <button class="shot-pill" onclick="selectShotType(this,'three')" data-type="three">🎯 3-Pointer</button>
+                <button class="shot-pill" onclick="selectShotType(this,'freethrow')" data-type="freethrow">🎳 Free Throw</button>
+            </div>
             <div class="action-row">
                 <button class="btn btn-primary" id="btnStartCam" onclick="startCamera()">
                     📷 Start Camera
@@ -2228,6 +2274,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.addEventListener('DOMContentLoaded', loadProfile);
     })();
+
+
+    /* ─── SHOT TYPE SELECTOR JS (Feature #3) ────────────── */
+    window.currentShotType = 'layup';
+    const shotTypeLabels = {
+        layup: 'Layup', midrange: 'Mid-Range', three: '3-Pointer', freethrow: 'Free Throw'
+    };
+    window.selectShotType = function(el, type) {
+        document.querySelectorAll('.shot-pill').forEach(p => p.classList.remove('active'));
+        el.classList.add('active');
+        window.currentShotType = type;
+        // Update status bar hint
+        const hints = {
+            layup: 'Layup selected — focus on angles and touch',
+            midrange: 'Mid-range selected — nail the form',
+            three: '3-Pointer selected — arc is everything',
+            freethrow: 'Free throw selected — consistency mode'
+        };
+        const st = document.getElementById('statusText');
+        if (st) st.textContent = hints[type] || 'Ready to analyze your shot';
+    };
 
 </script>
 
