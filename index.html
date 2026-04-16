@@ -1258,6 +1258,26 @@
         font-size: 12px; font-weight: 600; margin-top: 8px;
     }
 
+
+  /* ── Feature #4: Real-Time Shot Counter ── */
+  .shot-counter-wrap { margin: 16px 0; }
+  .shot-score { display: flex; align-items: baseline; justify-content: center; gap: 8px; margin-bottom: 16px; }
+  .shot-score-makes { font-size: 52px; font-weight: 800; color: #4CAF50; line-height: 1; }
+  .shot-score-sep { font-size: 36px; font-weight: 300; color: var(--text-2); }
+  .shot-score-attempts { font-size: 52px; font-weight: 800; color: var(--text-1); line-height: 1; }
+  .shot-pct { text-align: center; font-size: 14px; color: var(--text-2); margin-bottom: 20px; letter-spacing: 0.5px; }
+  .shot-pct span { color: var(--brand); font-weight: 700; font-size: 18px; }
+  .shot-btn-row { display: flex; gap: 12px; }
+  .shot-btn { flex: 1; height: 80px; border-radius: var(--radius); border: none; font-size: 20px; font-weight: 800; letter-spacing: 1px; cursor: pointer; transition: transform 0.15s var(--spring), box-shadow 0.15s; }
+  .shot-btn-make { background: linear-gradient(135deg, #4CAF50, #2E7D32); color: #fff; box-shadow: 0 6px 20px rgba(76,175,80,0.4); }
+  .shot-btn-miss { background: linear-gradient(135deg, #F44336, #B71C1C); color: #fff; box-shadow: 0 6px 20px rgba(244,67,54,0.4); }
+  .shot-btn:active { transform: scale(0.94); }
+  @keyframes tapFlash { 0%{transform:scale(1)} 30%{transform:scale(1.08)} 70%{transform:scale(0.97)} 100%{transform:scale(1)} }
+  .shot-btn.flashing { animation: tapFlash 0.3s var(--spring); }
+  .shot-reset-row { text-align: center; margin-top: 12px; }
+  .shot-reset-btn { background: none; border: 1px solid var(--border); color: var(--text-2); padding: 6px 20px; border-radius: 30px; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+  .shot-reset-btn:hover { border-color: var(--brand); color: var(--brand); }
+
 </style>
 </head>
 <body>
@@ -1440,7 +1460,25 @@
 
 
             <!-- Shot Type Selector -->
-            <div class="shot-type-label">Shot Type</div>
+            
+        <!-- Shot Counter -->
+        <div class="shot-counter-wrap">
+          <div class="shot-score">
+            <span class="shot-score-makes" id="scoreMakes">0</span>
+            <span class="shot-score-sep">/</span>
+            <span class="shot-score-attempts" id="scoreAttempts">0</span>
+          </div>
+          <div class="shot-pct">Make Rate: <span id="scorePct">--%</span></div>
+          <div class="shot-btn-row">
+            <button class="shot-btn shot-btn-make" onclick="recordMake(this)">✅ MAKE</button>
+            <button class="shot-btn shot-btn-miss" onclick="recordMiss(this)">❌ MISS</button>
+          </div>
+          <div class="shot-reset-row">
+            <button class="shot-reset-btn" onclick="resetCounter()">↺ Reset Session</button>
+          </div>
+        </div>
+
+        <div class="shot-type-label">Shot Type</div>
             <div class="shot-type-row" id="shotTypeRow">
                 <button class="shot-pill active" onclick="selectShotType(this,'layup')" data-type="layup">🏃 Layup</button>
                 <button class="shot-pill" onclick="selectShotType(this,'midrange')" data-type="midrange">💫 Mid-Range</button>
@@ -2295,6 +2333,52 @@ document.addEventListener('DOMContentLoaded', () => {
         const st = document.getElementById('statusText');
         if (st) st.textContent = hints[type] || 'Ready to analyze your shot';
     };
+
+
+// ── Feature #4: Real-Time Shot Counter ──
+(function() {
+  window.sessionMakes = 0;
+  window.sessionAttempts = 0;
+
+  function updateDisplay() {
+    document.getElementById('scoreMakes').textContent = window.sessionMakes;
+    document.getElementById('scoreAttempts').textContent = window.sessionAttempts;
+    var pct = window.sessionAttempts > 0 ? Math.round((window.sessionMakes / window.sessionAttempts) * 100) : '--';
+    document.getElementById('scorePct').textContent = pct === '--' ? '--%' : pct + '%';
+  }
+
+  function flashBtn(el) {
+    el.classList.remove('flashing');
+    void el.offsetWidth;
+    el.classList.add('flashing');
+    setTimeout(function() { el.classList.remove('flashing'); }, 350);
+  }
+
+  window.recordMake = function(el) {
+    window.sessionMakes++;
+    window.sessionAttempts++;
+    updateDisplay();
+    flashBtn(el);
+    var st = document.getElementById('statusText');
+    if (st) st.textContent = '🔥 Nice make! Keep it going.';
+  };
+
+  window.recordMiss = function(el) {
+    window.sessionAttempts++;
+    updateDisplay();
+    flashBtn(el);
+    var st = document.getElementById('statusText');
+    if (st) st.textContent = '💪 Stay focused — next one goes in.';
+  };
+
+  window.resetCounter = function() {
+    window.sessionMakes = 0;
+    window.sessionAttempts = 0;
+    updateDisplay();
+    var st = document.getElementById('statusText');
+    if (st) st.textContent = 'Session reset — ready to go!';
+  };
+})();
 
 </script>
 
