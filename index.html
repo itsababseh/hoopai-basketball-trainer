@@ -1102,7 +1102,126 @@
     .ob-cta:active { transform: scale(0.97); }
     .ob-cta:disabled { opacity: 0.4; cursor: default; transform: none; }
 
-    </style>
+        /* ─── PLAYER PROFILE (Feature #2) ─────────────────────── */
+    #profileModal {
+        position: fixed; inset: 0; z-index: 8000;
+        background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+        display: flex; align-items: flex-end; justify-content: center;
+        opacity: 0; pointer-events: none;
+        transition: opacity 0.3s var(--ease);
+    }
+    #profileModal.open { opacity: 1; pointer-events: all; }
+
+    .profile-sheet {
+        background: var(--surface);
+        border-radius: 28px 28px 0 0;
+        width: 100%; max-width: 480px;
+        padding: 12px 24px 48px;
+        transform: translateY(100%);
+        transition: transform 0.4s var(--spring);
+        max-height: 90vh; overflow-y: auto;
+    }
+    #profileModal.open .profile-sheet { transform: translateY(0); }
+
+    .profile-handle {
+        width: 36px; height: 4px; border-radius: 2px;
+        background: var(--border-hover); margin: 0 auto 24px; 
+    }
+
+    .profile-avatar-row {
+        display: flex; align-items: center; gap: 18px; margin-bottom: 28px;
+    }
+    .profile-avatar {
+        width: 72px; height: 72px; border-radius: 50%;
+        background: var(--primary-gradient, linear-gradient(135deg, #FF8A5B, #FF6B35));
+        display: flex; align-items: center; justify-content: center;
+        font-size: 26px; font-weight: 800; color: #fff;
+        flex-shrink: 0;
+        box-shadow: 0 8px 24px rgba(255,107,53,0.35);
+    }
+    .profile-name-block { flex: 1; }
+    .profile-name-display {
+        font-size: 22px; font-weight: 700; color: var(--text-1);
+        margin-bottom: 4px;
+    }
+    .profile-level-badge {
+        display: inline-block; padding: 3px 10px;
+        background: var(--brand-subtle); border-radius: 20px;
+        font-size: 11px; font-weight: 600; color: var(--brand);
+        text-transform: uppercase; letter-spacing: 0.5px;
+    }
+
+    .profile-stats-strip {
+        display: grid; grid-template-columns: 1fr 1fr 1fr;
+        gap: 12px; margin-bottom: 28px;
+    }
+    .profile-stat {
+        background: var(--surface2); border-radius: var(--radius-md);
+        padding: 14px 10px; text-align: center;
+    }
+    .profile-stat-val { font-size: 22px; font-weight: 800; color: var(--brand); }
+    .profile-stat-lbl { font-size: 10px; color: var(--text-3); margin-top: 3px; font-weight: 500; }
+
+    .profile-section-title {
+        font-size: 11px; font-weight: 600; color: var(--text-3);
+        text-transform: uppercase; letter-spacing: 0.8px;
+        margin-bottom: 12px; margin-top: 4px;
+    }
+    .profile-field-row {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 14px 0; border-bottom: 1px solid var(--border);
+    }
+    .profile-field-row:last-child { border-bottom: none; }
+    .profile-field-label { font-size: 14px; color: var(--text-2); }
+    .profile-field-value { font-size: 14px; font-weight: 600; color: var(--text-1); }
+
+    .profile-edit-form { display: none; }
+    .profile-edit-form.active { display: block; }
+    .profile-view.hidden { display: none; }
+
+    .profile-input {
+        width: 100%; padding: 14px 16px;
+        background: var(--surface2); border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm); color: var(--text-1);
+        font-size: 15px; font-family: inherit; margin-bottom: 12px;
+        transition: border-color 0.2s;
+    }
+    .profile-input:focus { outline: none; border-color: var(--brand); }
+
+    .profile-select {
+        width: 100%; padding: 14px 16px;
+        background: var(--surface2); border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm); color: var(--text-1);
+        font-size: 15px; font-family: inherit; margin-bottom: 12px;
+        appearance: none; cursor: pointer;
+        transition: border-color 0.2s;
+    }
+    .profile-select:focus { outline: none; border-color: var(--brand); }
+
+    .profile-btn-row { display: flex; gap: 12px; margin-top: 8px; }
+    .profile-btn {
+        flex: 1; padding: 16px; border-radius: var(--radius-md);
+        font-size: 15px; font-weight: 600; cursor: pointer; border: none;
+        transition: all 0.2s var(--spring);
+    }
+    .profile-btn:active { transform: scale(0.97); }
+    .profile-btn.primary { background: var(--brand); color: #fff; }
+    .profile-btn.primary:hover { box-shadow: 0 6px 20px rgba(255,107,53,0.35); }
+    .profile-btn.secondary { background: var(--surface2); color: var(--text-2); }
+
+    /* Header avatar trigger */
+    .header-avatar {
+        width: 36px; height: 36px; border-radius: 50%;
+        background: linear-gradient(135deg, #FF8A5B, #FF6B35);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 14px; font-weight: 700; color: #fff;
+        cursor: pointer; flex-shrink: 0;
+        transition: transform 0.2s var(--spring);
+        box-shadow: 0 4px 12px rgba(255,107,53,0.3);
+    }
+    .header-avatar:hover { transform: scale(1.1); }
+
+</style>
 </head>
 <body>
 
@@ -1209,11 +1328,12 @@
             <div class="wordmark-text">Hoop<span>AI</span></div>
         </div>
         <div class="header-badge">Pro</div>
+        <div class="header-avatar" id="headerAvatar" onclick="openProfile()">J</div>
     </header>
 
     <!-- Hero -->
     <div class="hero">
-        <div class="hero-greeting">Good morning, Athlete</div>
+        <div class="hero-greeting" id="heroGreeting">Good morning, Athlete</div>
         <h1 class="hero-title">Train like the<br><span class="highlight">greats do.</span></h1>
         <p class="hero-sub">AI-powered shot analysis, elite coaching, and personalized drills.</p>
     </div>
@@ -2009,6 +2129,208 @@ document.addEventListener('DOMContentLoaded', () => {
         document.addEventListener('DOMContentLoaded', checkOnboarding);
     })();
 
+
+    /* ─── PLAYER PROFILE JS (Feature #2) ─────────────────── */
+    (function() {
+        const KEYS = {
+            name: 'hoopai_name', position: 'hoopai_position',
+            height: 'hoopai_height', hand: 'hoopai_hand',
+            skill: 'hoopai_skill', goal: 'hoopai_goal',
+            sessions: 'hoopai_sessions', shots: 'hoopai_shots', streak: 'hoopai_streak'
+        };
+        const goalLabels = { form: 'Fix My Form', volume: 'Build Volume', game: 'Game Readiness' };
+        const skillLabels = { beginner: 'Beginner', intermediate: 'Intermediate', elite: 'Elite' };
+
+        function getInitials(name) {
+            if (!name || name === 'Athlete') return '🏀';
+            return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+        }
+
+        function loadProfile() {
+            const name = localStorage.getItem(KEYS.name) || 'Athlete';
+            const skill = localStorage.getItem(KEYS.skill) || 'beginner';
+            const goal = localStorage.getItem(KEYS.goal) || 'form';
+            const initials = getInitials(name);
+
+            // Header avatar
+            const ha = document.getElementById('headerAvatar');
+            if (ha) ha.textContent = initials;
+
+            // Hero greeting
+            const hg = document.getElementById('heroGreeting');
+            if (hg) {
+                const hour = new Date().getHours();
+                const tod = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
+                hg.textContent = 'Good ' + tod + (name !== 'Athlete' ? ', ' + name.split(' ')[0] : ', Athlete');
+            }
+
+            // Profile modal view
+            const nd = document.getElementById('profileNameDisplay');
+            if (nd) nd.textContent = name;
+            const lb = document.getElementById('profileLevelBadge');
+            if (lb) lb.textContent = skillLabels[skill] || 'Beginner';
+            const pal = document.getElementById('profileAvatarLg');
+            if (pal) pal.textContent = initials;
+
+            const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val || '—'; };
+            set('pFieldPosition', localStorage.getItem(KEYS.position));
+            set('pFieldHeight', localStorage.getItem(KEYS.height));
+            set('pFieldHand', localStorage.getItem(KEYS.hand));
+            set('pFieldGoal', goalLabels[goal] || 'Fix My Form');
+
+            const si = parseInt(localStorage.getItem(KEYS.sessions) || '0');
+            const sh = parseInt(localStorage.getItem(KEYS.shots) || '0');
+            const st = parseInt(localStorage.getItem(KEYS.streak) || '0');
+            set('pStatSessions', si); set('pStatShots', sh); set('pStatStreak', st);
+        }
+
+        function openProfile() {
+            loadProfile();
+            document.getElementById('profileModal').classList.add('open');
+        }
+        function closeProfile() {
+            document.getElementById('profileModal').classList.remove('open');
+        }
+        function closeProfileOnBackdrop(e) {
+            if (e.target === document.getElementById('profileModal')) closeProfile();
+        }
+        function showEditForm() {
+            document.getElementById('profileView').classList.add('hidden');
+            document.getElementById('profileEditForm').classList.add('active');
+            // Pre-fill
+            document.getElementById('editName').value = localStorage.getItem(KEYS.name) || '';
+            document.getElementById('editPosition').value = localStorage.getItem(KEYS.position) || '';
+            document.getElementById('editHeight').value = localStorage.getItem(KEYS.height) || '';
+            document.getElementById('editHand').value = localStorage.getItem(KEYS.hand) || '';
+            document.getElementById('editSkill').value = localStorage.getItem(KEYS.skill) || 'beginner';
+        }
+        function cancelEdit() {
+            document.getElementById('profileView').classList.remove('hidden');
+            document.getElementById('profileEditForm').classList.remove('active');
+        }
+        function saveProfile() {
+            const name = document.getElementById('editName').value.trim() || 'Athlete';
+            localStorage.setItem(KEYS.name, name);
+            localStorage.setItem(KEYS.position, document.getElementById('editPosition').value);
+            localStorage.setItem(KEYS.height, document.getElementById('editHeight').value);
+            localStorage.setItem(KEYS.hand, document.getElementById('editHand').value);
+            localStorage.setItem(KEYS.skill, document.getElementById('editSkill').value);
+            cancelEdit();
+            loadProfile();
+        }
+
+        window.openProfile = openProfile;
+        window.closeProfile = closeProfile;
+        window.closeProfileOnBackdrop = closeProfileOnBackdrop;
+        window.showEditForm = showEditForm;
+        window.cancelEdit = cancelEdit;
+        window.saveProfile = saveProfile;
+
+        document.addEventListener('DOMContentLoaded', loadProfile);
+    })();
+
 </script>
+
+<!-- ═══════════════════════════════════════════════════════
+     PLAYER PROFILE MODAL (Feature #2)
+═══════════════════════════════════════════════════════ -->
+<div id="profileModal" onclick="closeProfileOnBackdrop(event)">
+  <div class="profile-sheet">
+    <div class="profile-handle"></div>
+
+    <!-- VIEW MODE -->
+    <div class="profile-view" id="profileView">
+      <div class="profile-avatar-row">
+        <div class="profile-avatar" id="profileAvatarLg">J</div>
+        <div class="profile-name-block">
+          <div class="profile-name-display" id="profileNameDisplay">Athlete</div>
+          <span class="profile-level-badge" id="profileLevelBadge">Beginner</span>
+        </div>
+      </div>
+
+      <div class="profile-stats-strip">
+        <div class="profile-stat">
+          <div class="profile-stat-val" id="pStatSessions">0</div>
+          <div class="profile-stat-lbl">Sessions</div>
+        </div>
+        <div class="profile-stat">
+          <div class="profile-stat-val" id="pStatShots">0</div>
+          <div class="profile-stat-lbl">Total Shots</div>
+        </div>
+        <div class="profile-stat">
+          <div class="profile-stat-val" id="pStatStreak">0</div>
+          <div class="profile-stat-lbl">Best Streak</div>
+        </div>
+      </div>
+
+      <div class="profile-section-title">Player Info</div>
+      <div class="profile-field-row">
+        <span class="profile-field-label">Position</span>
+        <span class="profile-field-value" id="pFieldPosition">—</span>
+      </div>
+      <div class="profile-field-row">
+        <span class="profile-field-label">Height</span>
+        <span class="profile-field-value" id="pFieldHeight">—</span>
+      </div>
+      <div class="profile-field-row">
+        <span class="profile-field-label">Dominant Hand</span>
+        <span class="profile-field-value" id="pFieldHand">—</span>
+      </div>
+      <div class="profile-field-row">
+        <span class="profile-field-label">Goal</span>
+        <span class="profile-field-value" id="pFieldGoal">—</span>
+      </div>
+
+      <div class="profile-btn-row" style="margin-top:20px">
+        <button class="profile-btn primary" onclick="showEditForm()">Edit Profile</button>
+        <button class="profile-btn secondary" onclick="closeProfile()">Close</button>
+      </div>
+    </div>
+
+    <!-- EDIT MODE -->
+    <div class="profile-edit-form" id="profileEditForm">
+      <div class="profile-section-title">Edit Profile</div>
+      <input id="editName" class="profile-input" placeholder="Your name" maxlength="30">
+      <select id="editPosition" class="profile-select">
+        <option value="">Select position…</option>
+        <option value="PG">Point Guard (PG)</option>
+        <option value="SG">Shooting Guard (SG)</option>
+        <option value="SF">Small Forward (SF)</option>
+        <option value="PF">Power Forward (PF)</option>
+        <option value="C">Center (C)</option>
+      </select>
+      <select id="editHeight" class="profile-select">
+        <option value="">Select height…</option>
+        <option value="5'6&quot;">5'6"</option>
+        <option value="5'8&quot;">5'8"</option>
+        <option value="5'10&quot;">5'10"</option>
+        <option value="6'0&quot;">6'0"</option>
+        <option value="6'2&quot;">6'2"</option>
+        <option value="6'4&quot;">6'4"</option>
+        <option value="6'6&quot;">6'6"</option>
+        <option value="6'8&quot;">6'8"</option>
+        <option value="6'10&quot;">6'10"</option>
+        <option value="7'0&quot;">7'0"</option>
+      </select>
+      <select id="editHand" class="profile-select">
+        <option value="">Dominant hand…</option>
+        <option value="Right">Right</option>
+        <option value="Left">Left</option>
+        <option value="Both">Both</option>
+      </select>
+      <select id="editSkill" class="profile-select">
+        <option value="beginner">Beginner</option>
+        <option value="intermediate">Intermediate</option>
+        <option value="elite">Elite</option>
+      </select>
+      <div class="profile-btn-row">
+        <button class="profile-btn primary" onclick="saveProfile()">Save</button>
+        <button class="profile-btn secondary" onclick="cancelEdit()">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ═══════════════════════════════════════════════════════ -->
+
 </body>
 </html>
