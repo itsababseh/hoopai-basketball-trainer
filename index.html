@@ -957,9 +957,231 @@
     .spacer { flex: 1; }
     .text-brand { color: var(--brand); }
     .fw-800 { font-weight: 800; }
+    /* ─── ONBOARDING ─────────────────────────────────────────── */
+    #onboarding {
+        position: fixed; inset: 0; z-index: 9999;
+        background: var(--bg);
+        display: flex; flex-direction: column;
+        overflow: hidden;
+    }
+    #onboarding.hidden { display: none; }
+
+    .ob-screen {
+        position: absolute; inset: 0;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        padding: 40px 28px 32px;
+        opacity: 0; pointer-events: none;
+        transform: translateX(60px);
+        transition: opacity 0.4s var(--ease), transform 0.4s var(--ease);
+    }
+    .ob-screen.active {
+        opacity: 1; pointer-events: all;
+        transform: translateX(0);
+    }
+    .ob-screen.exit-left {
+        opacity: 0; transform: translateX(-60px);
+        pointer-events: none;
+    }
+
+    .ob-skip {
+        position: absolute; top: 54px; right: 24px;
+        color: var(--text-3); font-size: 14px; font-weight: 500;
+        cursor: pointer; z-index: 10;
+        padding: 8px 12px; border-radius: 20px;
+        transition: color 0.2s;
+    }
+    .ob-skip:hover { color: var(--text-2); }
+
+    .ob-dots {
+        position: absolute; bottom: 110px; left: 50%;
+        transform: translateX(-50%);
+        display: flex; gap: 8px;
+    }
+    .ob-dot {
+        width: 6px; height: 6px; border-radius: 50%;
+        background: var(--text-3);
+        transition: all 0.3s var(--spring);
+    }
+    .ob-dot.active { width: 22px; border-radius: 3px; background: var(--brand); }
+
+    .ob-ball-wrap {
+        width: 120px; height: 120px; margin-bottom: 36px;
+        position: relative;
+    }
+    .ob-ball {
+        width: 120px; height: 120px; border-radius: 50%;
+        background: radial-gradient(circle at 35% 35%, #FF8A5B, #CC4400);
+        box-shadow: 0 20px 60px rgba(255,107,53,0.4), inset 0 -8px 20px rgba(0,0,0,0.3);
+        animation: obBounce 2s ease-in-out infinite;
+        position: relative; overflow: hidden;
+    }
+    .ob-ball::before {
+        content: ''; position: absolute; inset: 0;
+        background: repeating-linear-gradient(
+            45deg, transparent, transparent 18px,
+            rgba(0,0,0,0.15) 18px, rgba(0,0,0,0.15) 20px
+        );
+        border-radius: 50%;
+    }
+    @keyframes obBounce {
+        0%, 100% { transform: translateY(0) scale(1); }
+        50% { transform: translateY(-16px) scale(1.04); }
+    }
+
+    .ob-headline {
+        font-size: 32px; font-weight: 800;
+        color: var(--text-1); text-align: center;
+        line-height: 1.2; margin-bottom: 14px;
+        letter-spacing: -0.5px;
+    }
+    .ob-headline span { color: var(--brand); }
+    .ob-sub {
+        font-size: 16px; color: var(--text-2);
+        text-align: center; line-height: 1.6;
+        max-width: 280px;
+    }
+
+    /* Skill cards */
+    .ob-skill-grid {
+        display: grid; grid-template-columns: 1fr 1fr 1fr;
+        gap: 12px; width: 100%; max-width: 360px; margin: 32px 0;
+    }
+    .ob-skill-card {
+        background: var(--surface2);
+        border: 2px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 20px 10px;
+        text-align: center; cursor: pointer;
+        transition: all 0.25s var(--spring);
+    }
+    .ob-skill-card:hover { border-color: var(--brand-soft); transform: translateY(-3px); }
+    .ob-skill-card.selected {
+        border-color: var(--brand); background: var(--brand-subtle);
+        transform: scale(1.05);
+        box-shadow: 0 0 0 4px var(--brand-glow);
+    }
+    .ob-skill-emoji { font-size: 28px; margin-bottom: 8px; }
+    .ob-skill-label { font-size: 12px; font-weight: 600; color: var(--text-1); }
+    .ob-skill-desc { font-size: 10px; color: var(--text-3); margin-top: 2px; }
+
+    /* Goal cards */
+    .ob-goal-grid {
+        display: flex; flex-direction: column;
+        gap: 12px; width: 100%; max-width: 340px; margin: 24px 0;
+    }
+    .ob-goal-card {
+        background: var(--surface2);
+        border: 2px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 16px 18px;
+        display: flex; align-items: center; gap: 14px;
+        cursor: pointer;
+        transition: all 0.25s var(--spring);
+    }
+    .ob-goal-card:hover { border-color: var(--brand-soft); }
+    .ob-goal-card.selected {
+        border-color: var(--brand); background: var(--brand-subtle);
+        box-shadow: 0 0 0 4px var(--brand-glow);
+    }
+    .ob-goal-icon { font-size: 24px; flex-shrink: 0; }
+    .ob-goal-text { flex: 1; }
+    .ob-goal-title { font-size: 14px; font-weight: 600; color: var(--text-1); }
+    .ob-goal-desc { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+
+    .ob-cta {
+        position: absolute; bottom: 36px; left: 28px; right: 28px;
+        padding: 18px; border-radius: var(--radius-lg);
+        background: var(--brand);
+        color: #fff; font-size: 17px; font-weight: 700;
+        text-align: center; cursor: pointer; border: none;
+        transition: all 0.2s var(--spring);
+        box-shadow: 0 8px 30px rgba(255,107,53,0.35);
+    }
+    .ob-cta:hover { transform: scale(1.02); box-shadow: 0 12px 40px rgba(255,107,53,0.45); }
+    .ob-cta:active { transform: scale(0.97); }
+    .ob-cta:disabled { opacity: 0.4; cursor: default; transform: none; }
+
     </style>
 </head>
 <body>
+
+<!-- ═══════════════════════════════════════════════════════
+     ONBOARDING OVERLAY  (Feature #1)
+═══════════════════════════════════════════════════════ -->
+<div id="onboarding">
+  <span class="ob-skip" onclick="skipOnboarding()">Skip</span>
+
+  <!-- Screen 1: Welcome -->
+  <div class="ob-screen active" id="ob-s1">
+    <div class="ob-ball-wrap"><div class="ob-ball"></div></div>
+    <h1 class="ob-headline">Train Like a<br><span>Pro.</span></h1>
+    <p class="ob-sub">AI-powered shot analysis and elite workouts — all in your pocket.</p>
+    <button class="ob-cta" onclick="obNext(1)">Get Started</button>
+  </div>
+
+  <!-- Screen 2: Skill Level -->
+  <div class="ob-screen" id="ob-s2">
+    <h1 class="ob-headline" style="margin-bottom:8px">What's your<br><span>level?</span></h1>
+    <p class="ob-sub">We'll personalise your training plan.</p>
+    <div class="ob-skill-grid">
+      <div class="ob-skill-card" onclick="selectSkill(this,'beginner')">
+        <div class="ob-skill-emoji">🌱</div>
+        <div class="ob-skill-label">Beginner</div>
+        <div class="ob-skill-desc">Just starting out</div>
+      </div>
+      <div class="ob-skill-card" onclick="selectSkill(this,'intermediate')">
+        <div class="ob-skill-emoji">⚡</div>
+        <div class="ob-skill-label">Intermediate</div>
+        <div class="ob-skill-desc">Recreational player</div>
+      </div>
+      <div class="ob-skill-card" onclick="selectSkill(this,'elite')">
+        <div class="ob-skill-emoji">🏆</div>
+        <div class="ob-skill-label">Elite</div>
+        <div class="ob-skill-desc">Competitive / HS+</div>
+      </div>
+    </div>
+    <button class="ob-cta" id="ob-skill-btn" onclick="obNext(2)" disabled>Continue</button>
+  </div>
+
+  <!-- Screen 3: Set Goal -->
+  <div class="ob-screen" id="ob-s3">
+    <h1 class="ob-headline" style="margin-bottom:8px">What's your<br><span>main goal?</span></h1>
+    <p class="ob-sub">Your plan adapts around this.</p>
+    <div class="ob-goal-grid">
+      <div class="ob-goal-card" onclick="selectGoal(this,'form')">
+        <div class="ob-goal-icon">🎯</div>
+        <div class="ob-goal-text">
+          <div class="ob-goal-title">Fix My Form</div>
+          <div class="ob-goal-desc">Improve shooting mechanics</div>
+        </div>
+      </div>
+      <div class="ob-goal-card" onclick="selectGoal(this,'volume')">
+        <div class="ob-goal-icon">🔥</div>
+        <div class="ob-goal-text">
+          <div class="ob-goal-title">Build Volume</div>
+          <div class="ob-goal-desc">Increase shot reps &amp; consistency</div>
+        </div>
+      </div>
+      <div class="ob-goal-card" onclick="selectGoal(this,'game')">
+        <div class="ob-goal-icon">🏀</div>
+        <div class="ob-goal-text">
+          <div class="ob-goal-title">Game Readiness</div>
+          <div class="ob-goal-desc">Contested shots &amp; real situations</div>
+        </div>
+      </div>
+    </div>
+    <button class="ob-cta" id="ob-goal-btn" onclick="finishOnboarding()" disabled>Start Training 🏀</button>
+  </div>
+
+  <!-- Progress dots -->
+  <div class="ob-dots">
+    <div class="ob-dot active" id="od0"></div>
+    <div class="ob-dot" id="od1"></div>
+    <div class="ob-dot" id="od2"></div>
+  </div>
+</div>
+<!-- ═══════════════════════════════════════════════════════ -->
 
 <!-- Ambient glow -->
 <div class="ambient"></div>
@@ -1713,6 +1935,80 @@ function markComplete() {
 document.addEventListener('DOMContentLoaded', () => {
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
 });
+
+    /* ─── ONBOARDING JS (Feature #1) ─────────────────────── */
+    (function() {
+        const STORAGE_KEY = 'hoopai_onboarded';
+        let obStep = 1;
+        let selectedSkill = null;
+        let selectedGoal = null;
+
+        function checkOnboarding() {
+            if (localStorage.getItem(STORAGE_KEY)) {
+                document.getElementById('onboarding').classList.add('hidden');
+            }
+        }
+
+        function obNext(from) {
+            const cur = document.getElementById('ob-s' + from);
+            const next = document.getElementById('ob-s' + (from + 1));
+            cur.classList.remove('active');
+            cur.classList.add('exit-left');
+            setTimeout(() => { cur.classList.remove('exit-left'); }, 400);
+            next.classList.add('active');
+            obStep = from + 1;
+            updateDots();
+        }
+
+        function updateDots() {
+            for (let i = 0; i < 3; i++) {
+                document.getElementById('od' + i).classList.toggle('active', i === obStep - 1);
+            }
+        }
+
+        function selectSkill(el, skill) {
+            document.querySelectorAll('.ob-skill-card').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedSkill = skill;
+            document.getElementById('ob-skill-btn').disabled = false;
+        }
+
+        function selectGoal(el, goal) {
+            document.querySelectorAll('.ob-goal-card').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedGoal = goal;
+            document.getElementById('ob-goal-btn').disabled = false;
+        }
+
+        function finishOnboarding() {
+            localStorage.setItem(STORAGE_KEY, '1');
+            localStorage.setItem('hoopai_skill', selectedSkill || 'beginner');
+            localStorage.setItem('hoopai_goal', selectedGoal || 'form');
+            const ob = document.getElementById('onboarding');
+            ob.style.transition = 'opacity 0.5s ease';
+            ob.style.opacity = '0';
+            setTimeout(() => ob.classList.add('hidden'), 500);
+        }
+
+        function skipOnboarding() {
+            localStorage.setItem(STORAGE_KEY, '1');
+            const ob = document.getElementById('onboarding');
+            ob.style.transition = 'opacity 0.3s ease';
+            ob.style.opacity = '0';
+            setTimeout(() => ob.classList.add('hidden'), 300);
+        }
+
+        // Expose to global
+        window.obNext = obNext;
+        window.selectSkill = selectSkill;
+        window.selectGoal = selectGoal;
+        window.finishOnboarding = finishOnboarding;
+        window.skipOnboarding = skipOnboarding;
+
+        // Run on load
+        document.addEventListener('DOMContentLoaded', checkOnboarding);
+    })();
+
 </script>
 </body>
 </html>
