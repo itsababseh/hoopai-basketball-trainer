@@ -1364,6 +1364,26 @@
   .streak-warning { margin-top: 12px; padding: 8px 12px; background: rgba(255,179,0,0.15); border-radius: 8px; border-left: 3px solid #FFB300; font-size: 13px; color: #FFB300; display: none; }
   .streak-warning.visible { display: block; }
 
+
+  /* ── Feature #9: Light Mode Theme ── */
+  :root.light {
+    --bg: #F5F5F7;
+    --surface: #FFFFFF;
+    --surface2: #EBEBF0;
+    --text-1: #1A1A2E;
+    --text-2: #6E6E80;
+    --border: #DCDCE0;
+    --brand: #E85D20;
+    --brand-glow: rgba(232,93,32,0.2);
+  }
+  html { transition: background-color 0.3s ease, color 0.3s ease; }
+  body, .app-header, .nav-bar, .tab-pane, .card, .profile-sheet, .summary-sheet, .shot-counter-wrap, .streak-card, .goal-section, .zones-section { transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease; }
+  /* Theme toggle button */
+  .theme-toggle { background: var(--surface2); border: 1.5px solid var(--border); border-radius: 30px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; transition: transform 0.4s var(--spring), background 0.3s; flex-shrink: 0; }
+  .theme-toggle:active { transform: scale(0.9); }
+  .theme-toggle.spinning { animation: spinOnce 0.4s var(--spring); }
+  @keyframes spinOnce { 0%{transform:rotate(0deg) scale(1)} 50%{transform:rotate(180deg) scale(1.15)} 100%{transform:rotate(360deg) scale(1)} }
+
 </style>
 </head>
 <body>
@@ -1472,6 +1492,7 @@
         </div>
         <div class="header-badge">Pro</div>
         <div class="header-avatar" id="headerAvatar" onclick="openProfile()">J</div>
+        <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Toggle theme">🌙</button>
     </header>
 
     <!-- Hero -->
@@ -2835,6 +2856,47 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   document.addEventListener('DOMContentLoaded', refreshStreakUI);
+})();
+
+
+// ── Feature #9: Dark/Light Mode Toggle ──
+(function() {
+  function applyTheme(theme) {
+    if (theme === 'light') {
+      document.documentElement.classList.add('light');
+      var btn = document.getElementById('themeToggle');
+      if (btn) btn.textContent = '☀️';
+    } else {
+      document.documentElement.classList.remove('light');
+      var btn = document.getElementById('themeToggle');
+      if (btn) btn.textContent = '🌙';
+    }
+    localStorage.setItem('hoopai_theme', theme);
+  }
+
+  window.toggleTheme = function() {
+    var current = localStorage.getItem('hoopai_theme') || 'dark';
+    var next = current === 'dark' ? 'light' : 'dark';
+    var btn = document.getElementById('themeToggle');
+    if (btn) {
+      btn.classList.remove('spinning');
+      void btn.offsetWidth;
+      btn.classList.add('spinning');
+      setTimeout(function() { btn.classList.remove('spinning'); }, 450);
+    }
+    applyTheme(next);
+  };
+
+  document.addEventListener('DOMContentLoaded', function() {
+    var saved = localStorage.getItem('hoopai_theme');
+    if (saved) {
+      applyTheme(saved);
+    } else {
+      // Respect system preference
+      var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      applyTheme(prefersDark ? 'dark' : 'light');
+    }
+  });
 })();
 
 </script>
