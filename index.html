@@ -1347,6 +1347,23 @@
   .goal-custom-input { width: 80px; padding: 8px 12px; border-radius: 10px; background: var(--surface2); border: 1.5px solid var(--border); color: var(--text-1); font-size: 14px; text-align: center; }
   .goal-set-btn { padding: 8px 16px; border-radius: 10px; background: var(--brand); border: none; color: #fff; font-weight: 700; cursor: pointer; font-size: 13px; }
 
+
+  /* ── Feature #8: Streak Tracker ── */
+  .streak-card { background: var(--surface); border-radius: var(--radius); padding: 20px 24px; margin-bottom: 24px; border: 1.5px solid transparent; background-clip: padding-box; position: relative; }
+  .streak-card::before { content: ''; position: absolute; inset: 0; border-radius: var(--radius); padding: 1.5px; background: linear-gradient(135deg, #FF6B35, #FFB347, #FF6B35); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; }
+  .streak-row { display: flex; align-items: center; justify-content: space-between; }
+  .streak-main { display: flex; align-items: center; gap: 12px; }
+  .streak-flame { font-size: 40px; display: inline-block; }
+  .streak-active .streak-flame { animation: flamePulse 1.2s ease-in-out infinite; }
+  @keyframes flamePulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.18) rotate(-5deg)} }
+  .streak-num { font-size: 48px; font-weight: 900; color: var(--brand); line-height: 1; }
+  .streak-unit { font-size: 14px; color: var(--text-2); margin-top: 4px; }
+  .streak-best { text-align: right; }
+  .streak-best-num { font-size: 24px; font-weight: 800; color: var(--text-1); }
+  .streak-best-label { font-size: 12px; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.5px; }
+  .streak-warning { margin-top: 12px; padding: 8px 12px; background: rgba(255,179,0,0.15); border-radius: 8px; border-left: 3px solid #FFB300; font-size: 13px; color: #FFB300; display: none; }
+  .streak-warning.visible { display: block; }
+
 </style>
 </head>
 <body>
@@ -1815,6 +1832,25 @@
         <!-- Feature #6: Shooting Zones Heat Map -->
         
         <!-- Feature #7: Daily Goal Setter -->
+        
+        <!-- Feature #8: Streak Tracker -->
+        <div class="streak-card" id="streakCard">
+          <div class="streak-row">
+            <div class="streak-main">
+              <span class="streak-flame" id="streakFlame">🔥</span>
+              <div>
+                <div class="streak-num" id="streakNum">0</div>
+                <div class="streak-unit">day streak</div>
+              </div>
+            </div>
+            <div class="streak-best">
+              <div class="streak-best-num" id="streakBestNum">0</div>
+              <div class="streak-best-label">Best</div>
+            </div>
+          </div>
+          <div class="streak-warning" id="streakWarning">⚠️ Practice today to keep your streak alive!</div>
+        </div>
+
         <div class="goal-section">
           <div class="goal-title">🎯 Daily Shot Goal</div>
           <div class="goal-ring-wrap">
@@ -2724,6 +2760,81 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('DOMContentLoaded', function() {
     updateRing(getTodayShots(), getGoal());
   });
+})();
+
+
+// ── Feature #8: Streak Tracker ──
+(function() {
+  function getStreak() { return parseInt(localStorage.getItem('hoopai_streak') || '0'); }
+  function getBestStreak() { return parseInt(localStorage.getItem('hoopai_best_streak') || '0'); }
+  function getLastSession() { return localStorage.getItem('hoopai_last_session') || ''; }
+
+  function refreshStreakUI() {
+    var streak = getStreak();
+    var best = getBestStreak();
+    var lastSession = getLastSession();
+    var today = new Date().toDateString();
+    var yesterday = new Date(Date.now() - 86400000).toDateString();
+
+    var numEl = document.getElementById('streakNum');
+    var bestEl = document.getElementById('streakBestNum');
+    var card = document.getElementById('streakCard');
+    var warning = document.getElementById('streakWarning');
+
+    if (numEl) numEl.textContent = streak;
+    if (bestEl) bestEl.textContent = best;
+
+    // Active flame animation if streak > 0
+    if (card) {
+      card.classList.toggle('streak-active', streak > 0);
+    }
+
+    // Warning if last session was not today
+    if (warning) {
+      var atRisk = streak > 0 && lastSession !== today;
+      warning.classList.toggle('visible', atRisk);
+    }
+  }
+
+  function updateStreak() {
+    var today = new Date().toDateString();
+    var yesterday = new Date(Date.now() - 86400000).toDateString();
+    var lastSession = getLastSession();
+    var streak = getStreak();
+
+    if (lastSession === today) {
+      // Already saved today — no change
+    } else if (lastSession === yesterday) {
+      // Consecutive day — increment
+      streak = streak + 1;
+      localStorage.setItem('hoopai_streak', streak);
+    } else if (lastSession === '') {
+      // First ever session
+      streak = 1;
+      localStorage.setItem('hoopai_streak', streak);
+    } else {
+      // Missed a day — reset
+      streak = 1;
+      localStorage.setItem('hoopai_streak', streak);
+    }
+
+    var best = getBestStreak();
+    if (streak > best) {
+      localStorage.setItem('hoopai_best_streak', streak);
+    }
+
+    localStorage.setItem('hoopai_last_session', today);
+    refreshStreakUI();
+  }
+
+  // Hook into saveSummary
+  var _origSave2 = window.saveSummary;
+  window.saveSummary = function() {
+    if (_origSave2) _origSave2();
+    updateStreak();
+  };
+
+  document.addEventListener('DOMContentLoaded', refreshStreakUI);
 })();
 
 </script>
