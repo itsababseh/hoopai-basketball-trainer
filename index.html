@@ -1326,6 +1326,27 @@
   .zone-miss-btn { background: #F44336; color: #fff; border: none; border-radius: 10px; padding: 8px 16px; font-weight: 700; cursor: pointer; }
   .zone-cancel-btn { background: none; border: none; color: var(--text-2); cursor: pointer; font-size: 18px; }
 
+
+  /* ── Feature #7: Daily Goal Setter ── */
+  .goal-section { margin: 24px 0; }
+  .goal-title { font-size: 16px; font-weight: 700; color: var(--text-1); margin-bottom: 16px; }
+  .goal-ring-wrap { display: flex; flex-direction: column; align-items: center; margin-bottom: 16px; position: relative; }
+  .goal-ring-svg { width: 160px; height: 160px; transform: rotate(-90deg); }
+  .goal-ring-bg { fill: none; stroke: var(--surface2); stroke-width: 12; }
+  .goal-ring-fill { fill: none; stroke: var(--brand); stroke-width: 12; stroke-linecap: round; transition: stroke-dashoffset 1s cubic-bezier(0.34,1.56,0.64,1); }
+  .goal-ring-fill.complete { stroke: #4CAF50; filter: drop-shadow(0 0 8px rgba(76,175,80,0.6)); }
+  .goal-ring-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+  .goal-ring-num { font-size: 32px; font-weight: 900; color: var(--text-1); line-height: 1; }
+  .goal-ring-label { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+  .goal-complete-msg { font-size: 15px; font-weight: 700; color: #4CAF50; text-align: center; margin-bottom: 10px; display: none; }
+  .goal-complete-msg.visible { display: block; }
+  .goal-presets { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
+  .goal-preset-btn { padding: 8px 16px; border-radius: 30px; background: var(--surface2); border: 1.5px solid var(--border); color: var(--text-1); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s var(--spring); }
+  .goal-preset-btn.active { background: var(--brand); border-color: var(--brand); color: #fff; transform: scale(1.06); }
+  .goal-custom-row { display: flex; gap: 8px; justify-content: center; align-items: center; }
+  .goal-custom-input { width: 80px; padding: 8px 12px; border-radius: 10px; background: var(--surface2); border: 1.5px solid var(--border); color: var(--text-1); font-size: 14px; text-align: center; }
+  .goal-set-btn { padding: 8px 16px; border-radius: 10px; background: var(--brand); border: none; color: #fff; font-weight: 700; cursor: pointer; font-size: 13px; }
+
 </style>
 </head>
 <body>
@@ -1792,6 +1813,33 @@
                     <div class="court-title">Court Heatmap</div>
                     
         <!-- Feature #6: Shooting Zones Heat Map -->
+        
+        <!-- Feature #7: Daily Goal Setter -->
+        <div class="goal-section">
+          <div class="goal-title">🎯 Daily Shot Goal</div>
+          <div class="goal-ring-wrap">
+            <svg class="goal-ring-svg" viewBox="0 0 160 160" id="goalRingSvg">
+              <circle class="goal-ring-bg" cx="80" cy="80" r="68"/>
+              <circle class="goal-ring-fill" id="goalRingFill" cx="80" cy="80" r="68" stroke-dasharray="427" stroke-dashoffset="427"/>
+            </svg>
+            <div class="goal-ring-center">
+              <div class="goal-ring-num" id="goalRingNum">0</div>
+              <div class="goal-ring-label" id="goalRingLabel">/ 50 shots</div>
+            </div>
+          </div>
+          <div class="goal-complete-msg" id="goalCompleteMsg">🎯 Daily goal reached! Amazing work!</div>
+          <div class="goal-presets">
+            <button class="goal-preset-btn" onclick="setGoalPreset(25)">25</button>
+            <button class="goal-preset-btn active" onclick="setGoalPreset(50)">50</button>
+            <button class="goal-preset-btn" onclick="setGoalPreset(75)">75</button>
+            <button class="goal-preset-btn" onclick="setGoalPreset(100)">100</button>
+          </div>
+          <div class="goal-custom-row">
+            <input class="goal-custom-input" id="goalCustomInput" type="number" placeholder="Custom" min="1" max="999"/>
+            <button class="goal-set-btn" onclick="setGoalCustom()">Set</button>
+          </div>
+        </div>
+
         <div class="zones-section">
           <div class="zones-title">🗺️ Shooting Zones</div>
           <div class="zones-court-wrap" id="zonesCourt">
@@ -2615,6 +2663,67 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   document.addEventListener('DOMContentLoaded', refreshZoneColors);
+})();
+
+
+// ── Feature #7: Daily Goal Setter ──
+(function() {
+  var CIRCUMFERENCE = 2 * Math.PI * 68; // ~427
+
+  function getTodayKey() { return 'hoopai_goal_shots_' + new Date().toDateString(); }
+
+  function getGoal() { return parseInt(localStorage.getItem('hoopai_daily_goal') || '50'); }
+
+  function getTodayShots() { return parseInt(localStorage.getItem(getTodayKey()) || '0'); }
+
+  function updateRing(shots, goal) {
+    var pct = Math.min(shots / goal, 1);
+    var offset = CIRCUMFERENCE * (1 - pct);
+    var fill = document.getElementById('goalRingFill');
+    var num = document.getElementById('goalRingNum');
+    var label = document.getElementById('goalRingLabel');
+    var msg = document.getElementById('goalCompleteMsg');
+    if (!fill) return;
+    fill.style.strokeDasharray = CIRCUMFERENCE;
+    fill.style.strokeDashoffset = offset;
+    if (pct >= 1) {
+      fill.classList.add('complete');
+      if (msg) msg.classList.add('visible');
+    } else {
+      fill.classList.remove('complete');
+      if (msg) msg.classList.remove('visible');
+    }
+    if (num) num.textContent = shots;
+    if (label) label.textContent = '/ ' + goal + ' shots';
+    // Update preset active state
+    document.querySelectorAll('.goal-preset-btn').forEach(function(btn) {
+      btn.classList.toggle('active', parseInt(btn.textContent) === goal);
+    });
+  }
+
+  window.setGoalPreset = function(n) {
+    localStorage.setItem('hoopai_daily_goal', n);
+    updateRing(getTodayShots(), n);
+  };
+
+  window.setGoalCustom = function() {
+    var val = parseInt(document.getElementById('goalCustomInput').value);
+    if (val > 0) { localStorage.setItem('hoopai_daily_goal', val); updateRing(getTodayShots(), val); }
+  };
+
+  // Hook into saveSummary to add today's shots
+  var _origSave = window.saveSummary;
+  window.saveSummary = function() {
+    var todayKey = getTodayKey();
+    var prev = parseInt(localStorage.getItem(todayKey) || '0');
+    localStorage.setItem(todayKey, prev + (window.sessionAttempts || 0));
+    updateRing(getTodayShots(), getGoal());
+    if (_origSave) _origSave();
+  };
+
+  document.addEventListener('DOMContentLoaded', function() {
+    updateRing(getTodayShots(), getGoal());
+  });
 })();
 
 </script>
