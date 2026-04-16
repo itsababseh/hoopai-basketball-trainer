@@ -1278,6 +1278,31 @@
   .shot-reset-btn { background: none; border: 1px solid var(--border); color: var(--text-2); padding: 6px 20px; border-radius: 30px; font-size: 13px; cursor: pointer; transition: all 0.2s; }
   .shot-reset-btn:hover { border-color: var(--brand); color: var(--brand); }
 
+
+  /* ── Feature #5: Session Summary ── */
+  #summaryModal { position: fixed; inset: 0; z-index: 9000; background: rgba(0,0,0,0.75); display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.3s var(--ease); }
+  #summaryModal.open { opacity: 1; pointer-events: all; }
+  .summary-sheet { width: 100%; background: var(--surface); border-radius: 28px 28px 0 0; padding: 32px 24px 40px; transform: translateY(100%); transition: transform 0.45s var(--spring); max-height: 90vh; overflow-y: auto; position: relative; overflow-x: hidden; }
+  #summaryModal.open .summary-sheet { transform: translateY(0); }
+  .summary-headline { font-size: 22px; font-weight: 800; background: linear-gradient(135deg, var(--brand), #FFB347); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-align: center; margin-bottom: 4px; }
+  .summary-sub { text-align: center; color: var(--text-2); font-size: 14px; margin-bottom: 24px; }
+  .summary-pct-hero { text-align: center; margin-bottom: 24px; }
+  .summary-pct-num { font-size: 72px; font-weight: 900; color: var(--brand); line-height: 1; }
+  .summary-pct-label { font-size: 13px; color: var(--text-2); letter-spacing: 1px; text-transform: uppercase; }
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+  .summary-card { background: var(--surface2); border-radius: var(--radius); padding: 16px; text-align: center; }
+  .summary-card-val { font-size: 32px; font-weight: 800; color: var(--text-1); }
+  .summary-card-label { font-size: 12px; color: var(--text-2); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .summary-actions { display: flex; gap: 12px; }
+  .summary-save-btn { flex: 1; background: var(--brand); color: #fff; border: none; border-radius: var(--radius); height: 52px; font-size: 16px; font-weight: 700; cursor: pointer; }
+  .summary-new-btn { flex: 1; background: var(--surface2); color: var(--text-1); border: none; border-radius: var(--radius); height: 52px; font-size: 16px; font-weight: 600; cursor: pointer; }
+  .end-session-btn { width: 100%; margin-top: 16px; background: none; border: 1.5px solid var(--border); color: var(--text-2); border-radius: var(--radius); height: 48px; font-size: 15px; cursor: pointer; transition: all 0.2s; }
+  .end-session-btn:hover { border-color: var(--brand); color: var(--brand); }
+  /* Confetti */
+  .confetti-container { position: absolute; top: 0; left: 0; width: 100%; height: 200px; pointer-events: none; overflow: hidden; }
+  .confetti-piece { position: absolute; width: 8px; height: 8px; border-radius: 2px; animation: confettiFall 2.5s ease-in forwards; }
+  @keyframes confettiFall { 0%{transform:translateY(-20px) rotate(0deg);opacity:1} 100%{transform:translateY(220px) rotate(720deg);opacity:0} }
+
 </style>
 </head>
 <body>
@@ -1473,7 +1498,12 @@
             <button class="shot-btn shot-btn-make" onclick="recordMake(this)">✅ MAKE</button>
             <button class="shot-btn shot-btn-miss" onclick="recordMiss(this)">❌ MISS</button>
           </div>
-          <div class="shot-reset-row">
+          
+        <div class="shot-reset-row" style="margin-top:8px;">
+          <button class="end-session-btn" onclick="openSummary()">🏁 End Session</button>
+        </div>
+
+        <div class="shot-reset-row" id="resetRow">
             <button class="shot-reset-btn" onclick="resetCounter()">↺ Reset Session</button>
           </div>
         </div>
@@ -2380,6 +2410,70 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 })();
 
+
+// ── Feature #5: Session Summary ──
+(function() {
+  var sessionStart = Date.now();
+
+  function spawnConfetti() {
+    var container = document.getElementById('confettiContainer');
+    if (!container) return;
+    container.innerHTML = '';
+    var colors = ['#FF6B35','#4CAF50','#2196F3','#FFB347','#E91E63','#9C27B0','#00BCD4'];
+    for (var i = 0; i < 30; i++) {
+      var piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      piece.style.left = Math.random() * 100 + '%';
+      piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+      piece.style.animationDelay = (Math.random() * 1.2) + 's';
+      piece.style.animationDuration = (1.8 + Math.random() * 1.2) + 's';
+      piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      container.appendChild(piece);
+    }
+  }
+
+  window.openSummary = function() {
+    var makes = window.sessionMakes || 0;
+    var attempts = window.sessionAttempts || 0;
+    var misses = attempts - makes;
+    var pct = attempts > 0 ? Math.round((makes / attempts) * 100) : 0;
+    var shotTypeLabels = { layup: 'Layup', midrange: 'Mid-Range', three: '3-Pointer', freethrow: 'Free Throw' };
+    var shotType = shotTypeLabels[window.currentShotType] || '--';
+    var name = localStorage.getItem('hoopai_name') || 'Athlete';
+
+    document.getElementById('summaryHeadline').textContent = pct >= 50 ? 'Great session, ' + name + '! 🔥' : 'Keep grinding, ' + name + '! 💪';
+    document.getElementById('summaryDate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+    document.getElementById('summaryPct').textContent = attempts > 0 ? pct + '%' : '--%';
+    document.getElementById('summaryMakes').textContent = makes;
+    document.getElementById('summaryAttempts').textContent = attempts;
+    document.getElementById('summaryMisses').textContent = misses;
+    document.getElementById('summaryShotType').textContent = shotType;
+
+    document.getElementById('summaryModal').classList.add('open');
+    if (attempts > 0) spawnConfetti();
+    sessionStart = Date.now();
+  };
+
+  window.saveSummary = function() {
+    var prevSessions = parseInt(localStorage.getItem('hoopai_sessions') || '0');
+    var prevShots = parseInt(localStorage.getItem('hoopai_shots') || '0');
+    localStorage.setItem('hoopai_sessions', prevSessions + 1);
+    localStorage.setItem('hoopai_shots', prevShots + (window.sessionAttempts || 0));
+    var today = new Date().toDateString();
+    localStorage.setItem('hoopai_last_session', today);
+    newSession();
+    var st = document.getElementById('statusText');
+    if (st) st.textContent = '✅ Session saved! Great work.';
+  };
+
+  window.newSession = function() {
+    document.getElementById('summaryModal').classList.remove('open');
+    window.sessionMakes = 0;
+    window.sessionAttempts = 0;
+    if (window.resetCounter) window.resetCounter();
+  };
+})();
+
 </script>
 
 <!-- ═══════════════════════════════════════════════════════
@@ -2482,6 +2576,42 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
 </div>
 <!-- ═══════════════════════════════════════════════════════ -->
+
+
+  <!-- Feature #5: Session Summary Modal -->
+  <div id="summaryModal">
+    <div class="summary-sheet">
+      <div class="confetti-container" id="confettiContainer"></div>
+      <div class="summary-headline" id="summaryHeadline">Great session!</div>
+      <div class="summary-sub" id="summaryDate"></div>
+      <div class="summary-pct-hero">
+        <div class="summary-pct-num" id="summaryPct">--%</div>
+        <div class="summary-pct-label">Make Rate</div>
+      </div>
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="summary-card-val" id="summaryMakes">0</div>
+          <div class="summary-card-label">Makes</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-card-val" id="summaryAttempts">0</div>
+          <div class="summary-card-label">Attempts</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-card-val" id="summaryMisses">0</div>
+          <div class="summary-card-label">Misses</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-card-val" id="summaryShotType">--</div>
+          <div class="summary-card-label">Shot Type</div>
+        </div>
+      </div>
+      <div class="summary-actions">
+        <button class="summary-save-btn" onclick="saveSummary()">💾 Save Session</button>
+        <button class="summary-new-btn" onclick="newSession()">🔄 New Session</button>
+      </div>
+    </div>
+  </div>
 
 </body>
 </html>
