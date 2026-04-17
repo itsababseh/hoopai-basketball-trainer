@@ -1401,6 +1401,19 @@
   .form-progress-fill { height: 100%; background: var(--brand); border-radius: 3px; transition: width 0.4s var(--spring); }
   .form-reset-btn { margin: 16px 20px 0; width: calc(100% - 40px); padding: 12px; border-radius: 12px; border: 1.5px solid var(--border); background: transparent; color: var(--text-2); font-size: 13px; font-weight: 700; cursor: pointer; }
 
+
+  /* ── Feature #17: Share Stats Card ── */
+  .share-btn { display: flex; align-items: center; gap: 8px; background: linear-gradient(135deg, var(--brand), #FFB347); border: none; border-radius: 24px; padding: 12px 24px; font-size: 14px; font-weight: 800; color: #fff; cursor: pointer; margin: 16px 0 4px; width: 100%; justify-content: center; transition: transform 0.15s var(--spring), box-shadow 0.2s; box-shadow: 0 4px 16px rgba(255,107,53,0.35); }
+  .share-btn:active { transform: scale(0.95); box-shadow: 0 2px 8px rgba(255,107,53,0.2); }
+  .share-canvas-wrap { position: fixed; inset: 0; z-index: 400; background: rgba(0,0,0,0.75); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+  .share-canvas-wrap.open { opacity: 1; pointer-events: all; }
+  #shareCanvas { border-radius: 16px; max-width: 90vw; box-shadow: 0 8px 40px rgba(0,0,0,0.5); }
+  .share-actions { display: flex; gap: 12px; }
+  .share-action-btn { padding: 12px 24px; border-radius: 20px; font-size: 14px; font-weight: 700; border: none; cursor: pointer; transition: transform 0.15s var(--spring); }
+  .share-action-btn:active { transform: scale(0.93); }
+  .share-save-btn { background: var(--brand); color: #fff; }
+  .share-close-btn { background: rgba(255,255,255,0.15); color: #fff; }
+
   /* ── Feature #6: Shooting Zones Heat Map ── */
   .zones-section { margin: 24px 0; }
   .zones-title { font-size: 16px; font-weight: 700; color: var(--text-1); margin-bottom: 12px; }
@@ -2389,6 +2402,10 @@
             <!-- injected by JS -->
           </div>
         </div>
+
+
+        <!-- Feature #17: Share Stats Card -->
+        <button class="share-btn" onclick="openShareCard()">📤 Share My Stats</button>
 
         <!-- Feature #13: Weekly Stats Bar Chart -->
         <div class="weekly-chart-section">
@@ -3564,6 +3581,128 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 })();
 
+
+// ── Feature #17: Share Stats Card ──
+(function() {
+  function drawCard() {
+    var canvas = document.getElementById('shareCanvas');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var W = canvas.width, H = canvas.height;
+
+    // Background gradient
+    var bg = ctx.createLinearGradient(0, 0, W, H);
+    bg.addColorStop(0, '#1A1A2E');
+    bg.addColorStop(1, '#16213E');
+    ctx.fillStyle = bg;
+    ctx.roundRect(0, 0, W, H, 20);
+    ctx.fill();
+
+    // Brand accent bar
+    var accent = ctx.createLinearGradient(0, 0, W, 0);
+    accent.addColorStop(0, '#FF6B35');
+    accent.addColorStop(1, '#FFB347');
+    ctx.fillStyle = accent;
+    ctx.fillRect(0, 0, W, 6);
+
+    // Logo / app name
+    ctx.fillStyle = '#FF6B35';
+    ctx.font = 'bold 22px system-ui, sans-serif';
+    ctx.fillText('🏀 HoopAI', 30, 48);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = '13px system-ui, sans-serif';
+    ctx.fillText('My Training Stats', 30, 68);
+
+    // Date
+    var today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    ctx.textAlign = 'right';
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font = '12px system-ui, sans-serif';
+    ctx.fillText(today, W - 30, 48);
+    ctx.textAlign = 'left';
+
+    // Pull stats
+    var totalShots = parseInt(localStorage.getItem('hoopai_shots') || '0');
+    var sessions = parseInt(localStorage.getItem('hoopai_sessions') || '0');
+    var streak = parseInt(localStorage.getItem('hoopai_streak') || '0');
+    var bestPct = parseFloat(localStorage.getItem('hoopai_pr_best_make_pct') || '0');
+    var bestStreak = parseInt(localStorage.getItem('hoopai_best_streak') || '0');
+
+    // Divider
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(30, 82); ctx.lineTo(W-30, 82); ctx.stroke();
+
+    // Stat boxes
+    var stats = [
+      { label: 'Total Shots', value: totalShots.toLocaleString(), icon: '🏀' },
+      { label: 'Sessions', value: sessions, icon: '📅' },
+      { label: 'Streak', value: streak + 'd', icon: '🔥' },
+      { label: 'Best Make%', value: bestPct > 0 ? bestPct.toFixed(1) + '%' : '--', icon: '🎯' },
+      { label: 'Best Streak', value: bestStreak + 'd', icon: '⭐' },
+    ];
+
+    var cols = stats.length;
+    var boxW = (W - 60) / cols;
+    var boxY = 100;
+
+    stats.forEach(function(s, i) {
+      var x = 30 + i * boxW;
+      // Box bg
+      ctx.fillStyle = 'rgba(255,255,255,0.06)';
+      ctx.roundRect(x + 4, boxY, boxW - 8, 140, 12);
+      ctx.fill();
+
+      ctx.font = '24px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText(s.icon, x + boxW/2, boxY + 36);
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 28px system-ui, sans-serif';
+      ctx.fillText(s.value, x + boxW/2, boxY + 78);
+
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.font = '11px system-ui, sans-serif';
+      ctx.fillText(s.label, x + boxW/2, boxY + 100);
+    });
+
+    // Footer
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255,107,53,0.8)';
+    ctx.font = 'bold 12px system-ui, sans-serif';
+    ctx.fillText('itsababseh.github.io/hoopai-basketball-trainer', W/2, H - 18);
+    ctx.textAlign = 'left';
+  }
+
+  window.openShareCard = function() {
+    drawCard();
+    var wrap = document.getElementById('shareCanvasWrap');
+    if (wrap) wrap.classList.add('open');
+  };
+
+  window.closeShareCard = function() {
+    var wrap = document.getElementById('shareCanvasWrap');
+    if (wrap) wrap.classList.remove('open');
+  };
+
+  window.saveShareCard = function() {
+    var canvas = document.getElementById('shareCanvas');
+    if (!canvas) return;
+    var link = document.createElement('a');
+    link.download = 'hoopai-stats-' + new Date().toISOString().slice(0,10) + '.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    // Also try Web Share API
+    if (navigator.share && canvas.toBlob) {
+      canvas.toBlob(function(blob) {
+        var file = new File([blob], 'hoopai-stats.png', { type: 'image/png' });
+        navigator.share({ title: 'My HoopAI Stats', files: [file] }).catch(function(){});
+      });
+    }
+  };
+})();
+
 // ── Feature #6: Shooting Zones Heat Map ──
 (function() {
   var ZONE_NAMES = { 'paint': 'Paint', 'mid-left': 'Mid-Left', 'mid-right': 'Mid-Right', 'corner3-left': 'Corner 3 Left', 'corner3-right': 'Corner 3 Right' };
@@ -4185,6 +4324,16 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
       <div id="formChecklistBody"><!-- injected by JS --></div>
       <button class="form-reset-btn" onclick="resetFormChecklist()">↺ Reset Checklist</button>
+    </div>
+  </div>
+
+
+  <!-- Feature #17: Share Stats Canvas -->
+  <div class="share-canvas-wrap" id="shareCanvasWrap">
+    <canvas id="shareCanvas" width="600" height="340"></canvas>
+    <div class="share-actions">
+      <button class="share-action-btn share-save-btn" onclick="saveShareCard()">💾 Save Image</button>
+      <button class="share-action-btn share-close-btn" onclick="closeShareCard()">✕ Close</button>
     </div>
   </div>
 
