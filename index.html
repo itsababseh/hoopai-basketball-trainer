@@ -1370,6 +1370,37 @@
   @keyframes prPop { 0%{transform:scale(1)} 40%{transform:scale(1.12)} 70%{transform:scale(0.96)} 100%{transform:scale(1)} }
   .pr-card.pr-pop { animation: prPop 0.45s var(--spring); }
 
+
+  /* ── Feature #16: Form Tips Overlay ── */
+  .form-tips-btn { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1.5px solid var(--border); border-radius: 24px; padding: 10px 18px; font-size: 13px; font-weight: 700; color: var(--text-1); cursor: pointer; margin: 12px 0 4px; width: 100%; justify-content: center; transition: border-color 0.2s, transform 0.15s var(--spring); }
+  .form-tips-btn:active { transform: scale(0.96); }
+  .form-tips-btn:hover { border-color: var(--brand); color: var(--brand); }
+  .form-sheet { position: fixed; inset: 0; z-index: 300; display: flex; flex-direction: column; justify-content: flex-end; pointer-events: none; }
+  .form-sheet.open { pointer-events: all; }
+  .form-sheet-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.55); opacity: 0; transition: opacity 0.3s; }
+  .form-sheet.open .form-sheet-backdrop { opacity: 1; }
+  .form-sheet-panel { position: relative; background: var(--surface); border-radius: 24px 24px 0 0; padding: 0 0 32px; max-height: 85vh; overflow-y: auto; transform: translateY(100%); transition: transform 0.4s var(--spring); }
+  .form-sheet.open .form-sheet-panel { transform: translateY(0); }
+  .form-sheet-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 14px auto 0; }
+  .form-sheet-header { padding: 16px 20px 8px; display: flex; align-items: center; justify-content: space-between; }
+  .form-sheet-title { font-size: 18px; font-weight: 800; color: var(--text-1); }
+  .form-sheet-close { background: var(--surface2); border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .form-category { padding: 14px 20px 4px; }
+  .form-category-title { font-size: 12px; font-weight: 800; color: var(--brand); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  .form-checklist { display: flex; flex-direction: column; gap: 6px; }
+  .form-check-item { display: flex; align-items: flex-start; gap: 12px; background: var(--surface2); border-radius: 12px; padding: 12px 14px; cursor: pointer; transition: background 0.2s; border: 1.5px solid transparent; }
+  .form-check-item.checked { background: rgba(255,107,53,0.08); border-color: rgba(255,107,53,0.3); }
+  .form-check-box { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; transition: background 0.2s, border-color 0.2s; margin-top: 1px; }
+  .form-check-item.checked .form-check-box { background: var(--brand); border-color: var(--brand); }
+  .form-check-text { flex: 1; }
+  .form-check-label { font-size: 13px; font-weight: 700; color: var(--text-1); }
+  .form-check-desc { font-size: 11px; color: var(--text-2); margin-top: 2px; line-height: 1.4; }
+  .form-progress-bar-wrap { margin: 16px 20px 4px; }
+  .form-progress-label { font-size: 12px; color: var(--text-2); margin-bottom: 6px; display: flex; justify-content: space-between; }
+  .form-progress-track { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+  .form-progress-fill { height: 100%; background: var(--brand); border-radius: 3px; transition: width 0.4s var(--spring); }
+  .form-reset-btn { margin: 16px 20px 0; width: calc(100% - 40px); padding: 12px; border-radius: 12px; border: 1.5px solid var(--border); background: transparent; color: var(--text-2); font-size: 13px; font-weight: 700; cursor: pointer; }
+
   /* ── Feature #6: Shooting Zones Heat Map ── */
   .zones-section { margin: 24px 0; }
   .zones-title { font-size: 16px; font-weight: 700; color: var(--text-1); margin-bottom: 12px; }
@@ -1749,6 +1780,10 @@
             <button class="coach-next-btn" onclick="nextCoachTip()">💡 Next Tip</button>
           </div>
         </div>
+
+
+        <!-- Feature #16: Form Tips Button -->
+        <button class="form-tips-btn" onclick="openFormTips()">📋 Shooting Form Checklist</button>
 
         <div class="shot-type-label">Shot Type</div>
             <div class="shot-type-row" id="shotTypeRow">
@@ -3423,6 +3458,112 @@ document.addEventListener('DOMContentLoaded', () => {
   window.renderPRs = renderPRs;
 })();
 
+
+// ── Feature #16: Form Tips Overlay ──
+(function() {
+  var FORM_CATEGORIES = [
+    {
+      title: '👣 Stance & Footwork',
+      items: [
+        { id: 'f1', label: 'Athletic stance', desc: 'Feet shoulder-width apart, knees slightly bent, weight on balls of feet.' },
+        { id: 'f2', label: 'Shooting foot forward', desc: 'Dominant foot slightly ahead, toes pointing toward basket.' },
+        { id: 'f3', label: 'Square to basket', desc: 'Hips and shoulders aligned with target before shooting.' },
+      ]
+    },
+    {
+      title: '🤲 Hand Position',
+      items: [
+        { id: 'f4', label: 'Ball on fingertips', desc: 'No palm contact — hold with fingerpads for control and spin.' },
+        { id: 'f5', label: 'Guide hand off side', desc: 'Non-dominant hand on side of ball, not pushing.' },
+        { id: 'f6', label: 'Shooting hand L-shape', desc: 'Wrist cocked back, elbow under ball forming an "L".' },
+      ]
+    },
+    {
+      title: '💪 Shot Mechanics',
+      items: [
+        { id: 'f7', label: 'Elbow in', desc: 'Shooting elbow stays under the ball, not flaring out.' },
+        { id: 'f8', label: 'Full extension', desc: 'Extend arm fully toward basket on release.' },
+        { id: 'f9', label: 'High arc (45–55°)', desc: 'Aim for a rainbow arc — not flat, not too high.' },
+        { id: 'f10', label: 'Backspin', desc: 'Ball spins backward off fingertips — use the rim to your advantage.' },
+      ]
+    },
+    {
+      title: '🎯 Follow-Through',
+      items: [
+        { id: 'f11', label: 'Goose neck finish', desc: 'Wrist snaps forward and down — hold the follow-through.' },
+        { id: 'f12', label: 'Eyes on target', desc: 'Focus on the front of the rim throughout the shot.' },
+        { id: 'f13', label: 'Hold finish until swish', desc: 'Keep pose until the ball hits — builds muscle memory.' },
+      ]
+    }
+  ];
+
+  var checked = {};
+
+  function saveChecked() { localStorage.setItem('hoopai_form_checked', JSON.stringify(checked)); }
+  function loadChecked() {
+    try { checked = JSON.parse(localStorage.getItem('hoopai_form_checked') || '{}'); } catch(e) { checked = {}; }
+  }
+
+  function renderChecklist() {
+    loadChecked();
+    var body = document.getElementById('formChecklistBody');
+    if (!body) return;
+    body.innerHTML = '';
+    var total = 0, done = 0;
+    FORM_CATEGORIES.forEach(function(cat) {
+      var catDiv = document.createElement('div');
+      catDiv.className = 'form-category';
+      var title = document.createElement('div');
+      title.className = 'form-category-title';
+      title.textContent = cat.title;
+      catDiv.appendChild(title);
+      var list = document.createElement('div');
+      list.className = 'form-checklist';
+      cat.items.forEach(function(item) {
+        total++;
+        if (checked[item.id]) done++;
+        var el = document.createElement('div');
+        el.className = 'form-check-item' + (checked[item.id] ? ' checked' : '');
+        el.onclick = function() { toggleCheck(item.id); };
+        el.innerHTML = '<div class="form-check-box">' + (checked[item.id] ? '✓' : '') + '</div>' +
+          '<div class="form-check-text"><div class="form-check-label">' + item.label + '</div>' +
+          '<div class="form-check-desc">' + item.desc + '</div></div>';
+        list.appendChild(el);
+      });
+      catDiv.appendChild(list);
+      body.appendChild(catDiv);
+    });
+    // Update progress
+    var fill = document.getElementById('formProgressFill');
+    var lbl = document.getElementById('formScoreLabel');
+    if (fill) fill.style.width = (total > 0 ? (done/total*100) : 0) + '%';
+    if (lbl) lbl.textContent = done + ' / ' + total;
+  }
+
+  function toggleCheck(id) {
+    checked[id] = !checked[id];
+    saveChecked();
+    renderChecklist();
+  }
+
+  window.openFormTips = function() {
+    renderChecklist();
+    var sheet = document.getElementById('formSheet');
+    if (sheet) { sheet.classList.add('open'); document.body.style.overflow = 'hidden'; }
+  };
+
+  window.closeFormTips = function() {
+    var sheet = document.getElementById('formSheet');
+    if (sheet) { sheet.classList.remove('open'); document.body.style.overflow = ''; }
+  };
+
+  window.resetFormChecklist = function() {
+    checked = {};
+    saveChecked();
+    renderChecklist();
+  };
+})();
+
 // ── Feature #6: Shooting Zones Heat Map ──
 (function() {
   var ZONE_NAMES = { 'paint': 'Paint', 'mid-left': 'Mid-Left', 'mid-right': 'Mid-Right', 'corner3-left': 'Corner 3 Left', 'corner3-right': 'Corner 3 Right' };
@@ -4020,6 +4161,30 @@ document.addEventListener('DOMContentLoaded', () => {
         <button class="summary-save-btn" onclick="saveSummary()">💾 Save Session</button>
         <button class="summary-new-btn" onclick="newSession()">🔄 New Session</button>
       </div>
+    </div>
+  </div>
+
+
+  <!-- Feature #16: Form Tips Overlay -->
+  <div class="form-sheet" id="formSheet">
+    <div class="form-sheet-backdrop" onclick="closeFormTips()"></div>
+    <div class="form-sheet-panel">
+      <div class="form-sheet-handle"></div>
+      <div class="form-sheet-header">
+        <div class="form-sheet-title">📋 Form Checklist</div>
+        <button class="form-sheet-close" onclick="closeFormTips()">✕</button>
+      </div>
+      <div class="form-progress-bar-wrap">
+        <div class="form-progress-label">
+          <span>Form Score</span>
+          <span id="formScoreLabel">0 / 0</span>
+        </div>
+        <div class="form-progress-track">
+          <div class="form-progress-fill" id="formProgressFill" style="width:0%"></div>
+        </div>
+      </div>
+      <div id="formChecklistBody"><!-- injected by JS --></div>
+      <button class="form-reset-btn" onclick="resetFormChecklist()">↺ Reset Checklist</button>
     </div>
   </div>
 
