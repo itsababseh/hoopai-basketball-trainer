@@ -1324,6 +1324,27 @@
   .weekly-chart-stat-val { font-size: 18px; font-weight: 800; color: var(--text-1); }
   .weekly-chart-stat-lbl { font-size: 10px; color: var(--text-2); margin-top: 2px; }
 
+
+  /* ── Feature #14: Workout Timer ── */
+  .timer-section { margin: 16px 0 8px; }
+  .timer-card { background: var(--surface); border-radius: var(--radius); padding: 16px 20px; border: 1px solid var(--border); }
+  .timer-display { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .timer-digits { font-size: 42px; font-weight: 900; font-variant-numeric: tabular-nums; color: var(--text-1); letter-spacing: 2px; transition: color 0.3s; }
+  .timer-digits.timer-low { color: #F44336; }
+  .timer-digits.timer-done { color: #4CAF50; }
+  .timer-controls { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+  .timer-btn { padding: 8px 18px; border-radius: 20px; font-size: 13px; font-weight: 700; border: none; cursor: pointer; transition: transform 0.12s var(--spring), opacity 0.2s; }
+  .timer-btn:active { transform: scale(0.93); }
+  .timer-btn-start { background: var(--brand); color: #fff; }
+  .timer-btn-pause { background: var(--surface2); color: var(--text-1); }
+  .timer-btn-reset { background: transparent; color: var(--text-2); font-size: 12px; padding: 4px 10px; }
+  .timer-presets { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+  .timer-preset { flex: 1; min-width: 48px; padding: 6px 4px; border-radius: 10px; border: 1.5px solid var(--border); background: transparent; color: var(--text-2); font-size: 12px; font-weight: 700; cursor: pointer; text-align: center; transition: border-color 0.2s, color 0.2s, background 0.2s; }
+  .timer-preset.active { border-color: var(--brand); color: var(--brand); background: rgba(255,107,53,0.08); }
+  .timer-label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .timer-label { font-size: 13px; font-weight: 700; color: var(--text-1); }
+  .timer-drill-name { font-size: 11px; color: var(--brand); font-weight: 600; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
   /* ── Feature #6: Shooting Zones Heat Map ── */
   .zones-section { margin: 24px 0; }
   .zones-title { font-size: 16px; font-weight: 700; color: var(--text-1); margin-bottom: 12px; }
@@ -1663,6 +1684,31 @@
         </div>
 
         
+
+        <!-- Feature #14: Workout Timer -->
+        <div class="timer-section">
+          <div class="timer-card">
+            <div class="timer-label-row">
+              <div class="timer-label">⏱ Workout Timer</div>
+              <div class="timer-drill-name" id="timerDrillName"></div>
+            </div>
+            <div class="timer-display">
+              <div class="timer-digits" id="timerDigits">05:00</div>
+              <div class="timer-controls">
+                <button class="timer-btn timer-btn-start" id="timerStartBtn" onclick="timerToggle()">▶ Start</button>
+                <button class="timer-btn timer-btn-reset" onclick="timerReset()">↺ Reset</button>
+              </div>
+            </div>
+            <div class="timer-presets">
+              <button class="timer-preset" onclick="timerSetPreset(this,2*60)">2 min</button>
+              <button class="timer-preset active" onclick="timerSetPreset(this,5*60)">5 min</button>
+              <button class="timer-preset" onclick="timerSetPreset(this,10*60)">10 min</button>
+              <button class="timer-preset" onclick="timerSetPreset(this,15*60)">15 min</button>
+              <button class="timer-preset" onclick="timerSetPreset(this,20*60)">20 min</button>
+            </div>
+          </div>
+        </div>
+
         <!-- Feature #11: AI Coach Tip -->
         <div class="coach-card" id="coachCard">
           <div class="coach-header">
@@ -3123,6 +3169,91 @@ document.addEventListener('DOMContentLoaded', () => {
   window.initProgress = function() {
     if (_origInitProgress) _origInitProgress();
     renderWeeklyChart();
+  };
+
+})();
+
+
+// ── Feature #14: Workout Timer ──
+(function() {
+  var timerTotal = 5 * 60;
+  var timerRemaining = 5 * 60;
+  var timerInterval = null;
+  var timerRunning = false;
+
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+  function formatTime(s) {
+    return pad(Math.floor(s / 60)) + ':' + pad(s % 60);
+  }
+
+  function updateDisplay() {
+    var el = document.getElementById('timerDigits');
+    var btn = document.getElementById('timerStartBtn');
+    if (!el) return;
+    el.textContent = formatTime(timerRemaining);
+    el.className = 'timer-digits';
+    if (timerRemaining <= 10 && timerRemaining > 0) el.classList.add('timer-low');
+    if (timerRemaining === 0) el.classList.add('timer-done');
+    if (btn) {
+      btn.textContent = timerRunning ? '⏸ Pause' : (timerRemaining === 0 ? '✓ Done' : '▶ Start');
+      btn.className = 'timer-btn ' + (timerRunning ? 'timer-btn-pause' : 'timer-btn-start');
+    }
+    // Show active drill name
+    var nameEl = document.getElementById('timerDrillName');
+    if (nameEl) nameEl.textContent = window.activeDrillName ? '🏀 ' + window.activeDrillName : '';
+  }
+
+  window.timerToggle = function() {
+    if (timerRemaining === 0) { timerReset(); return; }
+    if (timerRunning) {
+      clearInterval(timerInterval);
+      timerRunning = false;
+    } else {
+      timerRunning = true;
+      timerInterval = setInterval(function() {
+        if (timerRemaining > 0) {
+          timerRemaining--;
+          updateDisplay();
+          if (timerRemaining <= 10 && timerRemaining > 0 && window.sfx) window.sfx.buzzer();
+          if (timerRemaining === 0) {
+            clearInterval(timerInterval);
+            timerRunning = false;
+            updateDisplay();
+            if (window.sfx) window.sfx.cheer();
+          }
+        }
+      }, 1000);
+    }
+    updateDisplay();
+  };
+
+  window.timerReset = function() {
+    clearInterval(timerInterval);
+    timerRunning = false;
+    timerRemaining = timerTotal;
+    updateDisplay();
+  };
+
+  window.timerSetPreset = function(btn, seconds) {
+    clearInterval(timerInterval);
+    timerRunning = false;
+    timerTotal = seconds;
+    timerRemaining = seconds;
+    // Update active preset button
+    var presets = document.querySelectorAll('.timer-preset');
+    presets.forEach(function(b) { b.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+    updateDisplay();
+  };
+
+  // Init display on load
+  document.addEventListener('DOMContentLoaded', function() { updateDisplay(); });
+  // Also update when Record tab becomes active
+  var _origShowTab = window.showTab;
+  window.showTab = function(name) {
+    if (_origShowTab) _origShowTab(name);
+    if (name === 'record') { setTimeout(updateDisplay, 50); }
   };
 
 })();
