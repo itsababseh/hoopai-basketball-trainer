@@ -1713,6 +1713,31 @@
   .video-bm-del { background: var(--surface2); color: var(--text-2); }
   .video-bm-empty { text-align: center; padding: 24px 0; color: var(--text-3); font-size: 0.85rem; }
 
+
+  /* ── Feature #38: Custom Sound Pack ── */
+  .sound-pack-section { margin: 24px 0; max-width: 100%; overflow: hidden; box-sizing: border-box; }
+  .sound-pack-section h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; color: var(--text-1); }
+  .sound-pack-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .sound-pack-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px; text-align: center; cursor: pointer; transition: transform 0.15s var(--spring), border-color 0.2s; }
+  .sound-pack-card:active { transform: scale(0.96); }
+  .sound-pack-card.selected { border-color: var(--brand); background: rgba(255,107,53,0.06); }
+  .sound-pack-icon { font-size: 2rem; margin-bottom: 6px; }
+  .sound-pack-name { font-size: 0.85rem; font-weight: 700; color: var(--text-1); margin-bottom: 2px; }
+  .sound-pack-desc { font-size: 0.65rem; color: var(--text-3); }
+  .sound-pack-check { display: none; font-size: 0.7rem; color: var(--brand); font-weight: 600; margin-top: 4px; }
+  .sound-pack-card.selected .sound-pack-check { display: block; }
+  .sound-settings { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+  .sound-setting-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .sound-setting-row:last-child { border-bottom: none; }
+  .sound-setting-label { font-size: 0.85rem; color: var(--text-1); font-weight: 500; }
+  .sound-setting-control { display: flex; align-items: center; gap: 8px; }
+  .sound-volume-slider { width: 80px; accent-color: var(--brand); }
+  .sound-toggle { width: 44px; height: 24px; border-radius: 12px; border: none; background: var(--surface3); position: relative; cursor: pointer; transition: background 0.2s; }
+  .sound-toggle.on { background: #34c759; }
+  .sound-toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform 0.2s var(--spring); }
+  .sound-toggle.on::after { transform: translateX(20px); }
+  .sound-test-btn { padding: 6px 12px; border: none; border-radius: 8px; background: var(--surface2); color: var(--text-2); font-size: 0.75rem; font-weight: 600; cursor: pointer; }
+
   /* ── Feature #15: Personal Records & Milestones ── */
   .pr-section { margin: 24px 0; max-width: 100%; overflow: hidden; }
   .pr-section-title { font-size: 16px; font-weight: 700; color: var(--text-1); margin-bottom: 4px; }
@@ -3076,6 +3101,36 @@
             <button onclick="window.addVideoBookmark()">🔖 Save</button>
           </div>
           <div class="video-bm-list" id="videoBookmarkList"></div>
+        </div>
+
+
+        <!-- Feature #38: Custom Sound Pack -->
+        <div class="sound-pack-section">
+          <h3>🔊 Sound Pack</h3>
+          <div class="sound-pack-grid" id="soundPackGrid"></div>
+          <div class="sound-settings">
+            <div class="sound-setting-row">
+              <span class="sound-setting-label">Sound Effects</span>
+              <div class="sound-setting-control">
+                <button class="sound-toggle on" id="soundEnabledToggle" onclick="window.toggleSoundEnabled()"></button>
+              </div>
+            </div>
+            <div class="sound-setting-row">
+              <span class="sound-setting-label">Volume</span>
+              <div class="sound-setting-control">
+                <input type="range" class="sound-volume-slider" id="soundVolume" min="0" max="100" value="70" onchange="window.setSoundVolume(this.value)">
+                <span id="soundVolumeLabel" style="font-size:0.75rem;color:var(--text-2);min-width:30px">70%</span>
+              </div>
+            </div>
+            <div class="sound-setting-row">
+              <span class="sound-setting-label">Test Sound</span>
+              <div class="sound-setting-control">
+                <button class="sound-test-btn" onclick="window.testSound('make')">🏀 Make</button>
+                <button class="sound-test-btn" onclick="window.testSound('miss')">❌ Miss</button>
+                <button class="sound-test-btn" onclick="window.testSound('streak')">🔥 Streak</button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="zones-section">
@@ -6697,6 +6752,150 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   renderBookmarks();
+})();
+
+
+// ── Feature #38: Custom Sound Pack ──
+(function() {
+  var STORE_KEY = 'hoopai_sound_settings';
+  var audioCtx = null;
+
+  var PACKS = [
+    { id: 'classic', icon: '🏀', name: 'Classic', desc: 'Traditional gym sounds',
+      make: { freq: 800, type: 'sine', dur: 0.15 },
+      miss: { freq: 300, type: 'square', dur: 0.2 },
+      streak: { freq: [523, 659, 784], type: 'sine', dur: 0.12 } },
+    { id: 'arcade', icon: '🕹️', name: 'Arcade', desc: 'Retro game sounds',
+      make: { freq: 1200, type: 'square', dur: 0.08 },
+      miss: { freq: 200, type: 'sawtooth', dur: 0.25 },
+      streak: { freq: [660, 880, 1100, 1320], type: 'square', dur: 0.08 } },
+    { id: 'minimal', icon: '🔔', name: 'Minimal', desc: 'Soft clean tones',
+      make: { freq: 660, type: 'sine', dur: 0.1 },
+      miss: { freq: 220, type: 'sine', dur: 0.15 },
+      streak: { freq: [440, 554, 660], type: 'sine', dur: 0.15 } },
+    { id: 'hype', icon: '🔥', name: 'Hype', desc: 'Energy-packed sounds',
+      make: { freq: 1000, type: 'sawtooth', dur: 0.1 },
+      miss: { freq: 150, type: 'triangle', dur: 0.3 },
+      streak: { freq: [523, 784, 1047, 1318], type: 'sawtooth', dur: 0.07 } }
+  ];
+
+  function getSettings() {
+    try {
+      var s = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
+      return { pack: s.pack || 'classic', enabled: s.enabled !== false, volume: s.volume != null ? s.volume : 70 };
+    } catch(e) { return { pack: 'classic', enabled: true, volume: 70 }; }
+  }
+
+  function saveSettings(s) {
+    localStorage.setItem(STORE_KEY, JSON.stringify(s));
+  }
+
+  function getAudioCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+  }
+
+  function playTone(freq, type, duration, vol) {
+    try {
+      var ctx = getAudioCtx();
+      var gain = ctx.createGain();
+      gain.gain.setValueAtTime(vol, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+      gain.connect(ctx.destination);
+      var osc = ctx.createOscillator();
+      osc.type = type || 'sine';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      osc.connect(gain);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + duration);
+    } catch(e) {}
+  }
+
+  function playSound(soundType) {
+    var settings = getSettings();
+    if (!settings.enabled) return;
+    var pack = null;
+    for (var i = 0; i < PACKS.length; i++) {
+      if (PACKS[i].id === settings.pack) { pack = PACKS[i]; break; }
+    }
+    if (!pack) return;
+    var vol = (settings.volume / 100) * 0.3;
+    var sound = pack[soundType];
+    if (!sound) return;
+    if (Array.isArray(sound.freq)) {
+      for (var j = 0; j < sound.freq.length; j++) {
+        (function(f, delay) {
+          setTimeout(function() { playTone(f, sound.type, sound.dur, vol); }, delay);
+        })(sound.freq[j], j * 100);
+      }
+    } else {
+      playTone(sound.freq, sound.type, sound.dur, vol);
+    }
+  }
+
+  function renderPacks() {
+    var container = document.getElementById('soundPackGrid');
+    if (!container) return;
+    var settings = getSettings();
+    var h = '';
+    for (var i = 0; i < PACKS.length; i++) {
+      var p = PACKS[i];
+      var sel = p.id === settings.pack ? ' selected' : '';
+      h += '<div class="sound-pack-card' + sel + '" onclick="window.selectSoundPack(\'' + p.id + '\')">' +
+        '<div class="sound-pack-icon">' + p.icon + '</div>' +
+        '<div class="sound-pack-name">' + p.name + '</div>' +
+        '<div class="sound-pack-desc">' + p.desc + '</div>' +
+        '<div class="sound-pack-check">✓ Selected</div>' +
+        '</div>';
+    }
+    container.innerHTML = h;
+    // Update toggle
+    var toggle = document.getElementById('soundEnabledToggle');
+    if (toggle) { if (settings.enabled) toggle.classList.add('on'); else toggle.classList.remove('on'); }
+    var slider = document.getElementById('soundVolume');
+    if (slider) slider.value = settings.volume;
+    var label = document.getElementById('soundVolumeLabel');
+    if (label) label.textContent = settings.volume + '%';
+  }
+
+  window.selectSoundPack = function(packId) {
+    var s = getSettings(); s.pack = packId; saveSettings(s);
+    renderPacks();
+    playSound('make');
+  };
+
+  window.toggleSoundEnabled = function() {
+    var s = getSettings(); s.enabled = !s.enabled; saveSettings(s);
+    renderPacks();
+  };
+
+  window.setSoundVolume = function(val) {
+    var s = getSettings(); s.volume = parseInt(val); saveSettings(s);
+    var label = document.getElementById('soundVolumeLabel');
+    if (label) label.textContent = val + '%';
+  };
+
+  window.testSound = function(type) {
+    playSound(type);
+  };
+
+  // Expose global for other features to use
+  window.hoopPlaySound = playSound;
+
+  // Hook recordMake / recordMiss
+  var _origRecordMakeSnd = window.recordMake;
+  window.recordMake = function() {
+    if (_origRecordMakeSnd) _origRecordMakeSnd.apply(this, arguments);
+    playSound('make');
+  };
+
+  var _origRecordMissSnd = window.recordMiss;
+  window.recordMiss = function() {
+    if (_origRecordMissSnd) _origRecordMissSnd.apply(this, arguments);
+    playSound('miss');
+  };
+
+  renderPacks();
 })();
 
 </script>
