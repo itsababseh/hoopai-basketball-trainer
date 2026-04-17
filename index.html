@@ -1189,7 +1189,7 @@
     .fw-800 { font-weight: 800; }
     /* ─── ONBOARDING ─────────────────────────────────────────── */
     #onboarding {
-        position: fixed; inset: 0; z-index: 9999;
+        position: fixed; inset: 0; z-index: 10000;
         background: var(--bg);
         display: flex; flex-direction: column;
         overflow: hidden;
@@ -1218,7 +1218,7 @@
         position: absolute; top: 54px; right: 24px;
         color: var(--text-3); font-size: 14px; font-weight: 500;
         cursor: pointer; z-index: 10;
-        padding: 8px 12px; border-radius: 20px;
+        padding: 14px 16px; border-radius: 20px;
         transition: color 0.2s;
     }
     .ob-skip:hover { color: var(--text-2); }
@@ -1930,7 +1930,7 @@
   .onboard-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); transition: background 0.2s; }
   .onboard-dot.active { background: var(--brand); }
   .onboard-btn-row { display: flex; gap: 8px; }
-  .onboard-skip-btn { background: transparent; border: none; color: var(--text-2); font-size: 12px; cursor: pointer; padding: 4px 8px; }
+  .onboard-skip-btn { background: transparent; border: none; color: var(--text-2); font-size: 12px; cursor: pointer; padding: 12px 16px; }
   .onboard-next-btn { background: var(--brand); color: #fff; border: none; border-radius: 10px; padding: 7px 16px; font-size: 13px; font-weight: 700; cursor: pointer; transition: transform 0.15s var(--spring); }
   .onboard-next-btn:active { transform: scale(0.93); }
   .onboard-highlight { position: absolute; border-radius: 12px; box-shadow: 0 0 0 4px var(--brand), 0 0 0 9999px rgba(0,0,0,0.6); pointer-events: none; transition: all 0.4s var(--spring); z-index: 601; display: none; }
@@ -4777,13 +4777,13 @@ document.addEventListener('DOMContentLoaded', () => {
   window.nextOnboardStep = function() {
     currentStep++;
     if (currentStep >= STEPS.length) {
-      skipOnboarding();
+      skipOnboardTour();
       return;
     }
     renderStep(currentStep);
   };
 
-  window.skipOnboarding = function() {
+  window.skipOnboardTour = function() {
     var overlay = document.getElementById('onboardOverlay');
     if (overlay) {
       overlay.classList.remove('active');
@@ -7524,7 +7524,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   <!-- Feature #19: Onboarding Overlay -->
   <div class="onboard-overlay" id="onboardOverlay">
-    <div class="onboard-backdrop" onclick="skipOnboarding()"></div>
+    <div class="onboard-backdrop" onclick="skipOnboardTour()"></div>
     <div class="onboard-highlight" id="onboardHighlight"></div>
     <div class="onboard-tooltip" id="onboardTooltip">
       <div class="onboard-tooltip-step" id="onboardStep">Step 1 of 5</div>
@@ -7533,7 +7533,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="onboard-tooltip-footer">
         <div class="onboard-dots" id="onboardDots"></div>
         <div class="onboard-btn-row">
-          <button class="onboard-skip-btn" onclick="skipOnboarding()">Skip</button>
+          <button class="onboard-skip-btn" onclick="skipOnboardTour()">Skip</button>
           <button class="onboard-next-btn" onclick="nextOnboardStep()">Next →</button>
         </div>
       </div>
