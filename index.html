@@ -5449,12 +5449,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // Expose for other features
   window.sfx = { swish: playSwish, buzzer: playBuzzer, cheer: playCheer };
 
-  // Hook into make/miss buttons
+  // Hook into make/miss buttons (sound removed — Feature #38 handles sounds)
   var _origMake = window.recordMake;
-  window.recordMake = function(el) { playSwish(); if (_origMake) _origMake(el); };
+  window.recordMake = function(el) { if (_origMake) _origMake(el); };
 
   var _origMiss = window.recordMiss;
-  window.recordMiss = function(el) { playBuzzer(); if (_origMiss) _origMiss(el); };
+  window.recordMiss = function(el) { if (_origMiss) _origMiss(el); };
 
   // Hook into goal completion cheer
   var _origUpdateRing = window.setGoalPreset;
@@ -5610,6 +5610,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.toggleTheme = function() {
         var current = localStorage.getItem(THEME_KEY) || 'dark';
+        var btn = document.getElementById('themeToggle');
+        if (btn) {
+            btn.classList.remove('spinning');
+            void btn.offsetWidth;
+            btn.classList.add('spinning');
+            setTimeout(function() { btn.classList.remove('spinning'); }, 450);
+        }
         applyTheme(current === 'dark' ? 'light' : 'dark');
     };
 
@@ -5703,7 +5710,7 @@ document.addEventListener('DOMContentLoaded', () => {
     var _origRecordMakeC = window.recordMake;
     window.recordMake = function() {
         if (_origRecordMakeC) _origRecordMakeC.apply(this, arguments);
-        var makes = parseInt(localStorage.getItem('hoopai_session_makes') || '0');
+        var makes = (window.sessionMakes || 0);
         if (makes > 0 && makes % 5 === 0) {
             var msgs = ['\uD83D\uDD25 ' + makes + ' makes! On fire!', '\uD83C\uDFC0 ' + makes + ' buckets! Keep going!', '\u2B50 ' + makes + ' makes! You\'re locked in!'];
             window.triggerConfetti(msgs[Math.floor(Math.random() * msgs.length)]);
@@ -5713,8 +5720,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Hook: celebrate session end with good accuracy
     var _origSaveSummaryC = window.saveSummary;
     window.saveSummary = function() {
-        var makes = parseInt(localStorage.getItem('hoopai_session_makes') || '0');
-        var total = parseInt(localStorage.getItem('hoopai_session_total') || '0');
+        var makes = (window.sessionMakes || 0);
+        var total = (window.sessionAttempts || 0);
         var pct = total > 0 ? Math.round(makes / total * 100) : 0;
         if (_origSaveSummaryC) _origSaveSummaryC.apply(this, arguments);
         if (makes >= 5 && pct >= 50) {
@@ -6008,8 +6015,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Hook saveSummary to store session history for trend
     var _origSaveSummaryTrend = window.saveSummary;
     window.saveSummary = function() {
-        var makes = parseInt(localStorage.getItem('hoopai_session_makes') || '0');
-        var misses = parseInt(localStorage.getItem('hoopai_session_misses') || '0');
+        var makes = (window.sessionMakes || 0);
+        var misses = (window.sessionAttempts || 0) - (window.sessionMakes || 0);
         var history = getHistory();
         history.push({ makes: makes, misses: misses, date: Date.now() });
         if (history.length > 100) history = history.slice(-100);
