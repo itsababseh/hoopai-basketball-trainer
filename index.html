@@ -946,15 +946,15 @@
         flex-shrink: 0;
     }
     .trainer-play-btn {
-        width: 32px;
-        height: 32px;
+        width: 44px;
+        height: 44px;
         border-radius: 50%;
         background: var(--surface3);
         border: 1px solid var(--border);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 12px;
+        font-size: 14px;
         flex-shrink: 0;
         transition: all 0.2s var(--ease);
     }
@@ -1012,13 +1012,13 @@
     .video-sheet-title { font-size: 16px; font-weight: 800; letter-spacing: -0.3px; line-height: 1.3; }
     .video-sheet-channel { font-size: 12px; color: var(--text-3); font-weight: 500; margin-top: 3px; }
     .video-close {
-        width: 30px;
-        height: 30px;
+        width: 44px;
+        height: 44px;
         border-radius: 50%;
         background: var(--surface3);
         border: none;
         color: var(--text-2);
-        font-size: 16px;
+        font-size: 18px;
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -1570,11 +1570,11 @@
   .timer-digits.timer-low { color: #F44336; }
   .timer-digits.timer-done { color: #4CAF50; }
   .timer-controls { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
-  .timer-btn { padding: 8px 18px; border-radius: 20px; font-size: 13px; font-weight: 700; border: none; cursor: pointer; transition: transform 0.12s var(--spring), opacity 0.2s; }
+  .timer-btn { padding: 10px 18px; border-radius: 20px; font-size: 13px; min-height: 44px; font-weight: 700; border: none; cursor: pointer; transition: transform 0.12s var(--spring), opacity 0.2s; }
   .timer-btn:active { transform: scale(0.93); }
   .timer-btn-start { background: var(--brand); color: #fff; }
   .timer-btn-pause { background: var(--surface2); color: var(--text-1); }
-  .timer-btn-reset { background: transparent; color: var(--text-2); font-size: 12px; padding: 4px 10px; }
+  .timer-btn-reset { background: transparent; color: var(--text-2); font-size: 12px; padding: 10px 14px; min-height: 44px; }
   .timer-presets { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
   .timer-preset { flex: 1; min-width: 48px; padding: 6px 4px; border-radius: 10px; border: 1.5px solid var(--border); background: transparent; color: var(--text-2); font-size: 12px; font-weight: 700; cursor: pointer; text-align: center; transition: border-color 0.2s, color 0.2s, background 0.2s; }
   .timer-preset.active { border-color: var(--brand); color: var(--brand); background: rgba(255,107,53,0.08); }
@@ -1857,7 +1857,7 @@
   .form-sheet-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 14px auto 0; }
   .form-sheet-header { padding: 16px 20px 8px; display: flex; align-items: center; justify-content: space-between; }
   .form-sheet-title { font-size: 18px; font-weight: 800; color: var(--text-1); }
-  .form-sheet-close { background: var(--surface2); border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .form-sheet-close { background: var(--surface2); border: none; border-radius: 50%; width: 44px; height: 44px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
   .form-category { padding: 14px 20px 4px; }
   .form-category-title { font-size: 12px; font-weight: 800; color: var(--brand); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
   .form-checklist { display: flex; flex-direction: column; gap: 6px; }
@@ -1895,7 +1895,7 @@
   .reminder-banner-text { flex: 1; }
   .reminder-banner-title { font-size: 14px; font-weight: 800; line-height: 1.2; }
   .reminder-banner-sub { font-size: 11px; opacity: 0.88; margin-top: 2px; }
-  .reminder-banner-close { background: rgba(255,255,255,0.25); border: none; border-radius: 50%; width: 28px; height: 28px; color: #fff; font-size: 14px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+  .reminder-banner-close { background: rgba(255,255,255,0.25); border: none; border-radius: 50%; width: 44px; height: 44px; color: #fff; font-size: 16px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
   .reminder-banner-close:hover { background: rgba(255,255,255,0.4); }
   .reminder-banner-cta { background: rgba(255,255,255,0.25); border: none; border-radius: 12px; padding: 6px 12px; color: #fff; font-size: 12px; font-weight: 700; cursor: pointer; flex-shrink: 0; transition: background 0.2s; }
   .reminder-banner-cta:hover { background: rgba(255,255,255,0.4); }
@@ -1984,8 +1984,8 @@
   .zone-tap-modal { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--surface); border-radius: 16px; padding: 16px 24px; display: flex; gap: 12px; align-items: center; box-shadow: 0 8px 32px rgba(0,0,0,0.4); z-index: 8500; opacity: 0; pointer-events: none; transition: opacity 0.25s var(--spring), transform 0.25s var(--spring); transform: translateX(-50%) translateY(10px); }
   .zone-tap-modal.visible { opacity: 1; pointer-events: all; transform: translateX(-50%) translateY(0); }
   .zone-tap-modal-label { font-size: 14px; font-weight: 600; color: var(--text-1); min-width: 80px; }
-  .zone-make-btn { background: #4CAF50; color: #fff; border: none; border-radius: 10px; padding: 8px 16px; font-weight: 700; cursor: pointer; }
-  .zone-miss-btn { background: #F44336; color: #fff; border: none; border-radius: 10px; padding: 8px 16px; font-weight: 700; cursor: pointer; }
+  .zone-make-btn { background: #4CAF50; color: #fff; border: none; border-radius: 10px; padding: 12px 16px; min-height: 44px; font-weight: 700; cursor: pointer; }
+  .zone-miss-btn { background: #F44336; color: #fff; border: none; border-radius: 10px; padding: 12px 16px; min-height: 44px; font-weight: 700; cursor: pointer; }
   .zone-cancel-btn { background: none; border: none; color: var(--text-2); cursor: pointer; font-size: 18px; }
 
 
@@ -2031,14 +2031,14 @@
   html { transition: background-color 0.3s ease, color 0.3s ease; }
   body, .app-header, .nav-bar, .tab-pane, .card, .profile-sheet, .summary-sheet, .shot-counter-wrap, .streak-card, .goal-section, .zones-section { transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease; }
   /* Theme toggle button */
-  .theme-toggle { background: var(--surface2); border: 1.5px solid var(--border); border-radius: 30px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; transition: transform 0.4s var(--spring), background 0.3s; flex-shrink: 0; }
+  .theme-toggle { background: var(--surface2); border: 1.5px solid var(--border); border-radius: 30px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; transition: transform 0.4s var(--spring), background 0.3s; flex-shrink: 0; }
   .theme-toggle:active { transform: scale(0.9); }
   .theme-toggle.spinning { animation: spinOnce 0.4s var(--spring); }
   @keyframes spinOnce { 0%{transform:rotate(0deg) scale(1)} 50%{transform:rotate(180deg) scale(1.15)} 100%{transform:rotate(360deg) scale(1)} }
 
 
   /* ── Feature #10: Sound Toggle ── */
-  .sound-toggle { background: var(--surface2); border: 1.5px solid var(--border); border-radius: 30px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; transition: transform 0.2s var(--spring), background 0.3s; flex-shrink: 0; }
+  .sound-toggle { background: var(--surface2); border: 1.5px solid var(--border); border-radius: 30px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; transition: transform 0.2s var(--spring), background 0.3s; flex-shrink: 0; }
   .sound-toggle:active { transform: scale(0.88); }
 
 
