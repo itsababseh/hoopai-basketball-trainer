@@ -8,6 +8,7 @@
     <meta name="theme-color" content="#0A0A0A">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%23FF6B35'/><text x='96' y='130' text-anchor='middle' font-size='120'>🏀</text></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1937,16 +1938,7 @@
   .onboard-overlay.active .onboard-highlight { display: block; }
 
 
-  /* ── Feature #20: PWA Install Banner ── */
-  .pwa-banner { position: fixed; bottom: 72px; left: 12px; right: 12px; z-index: 550; background: var(--surface); border-radius: 16px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); border: 1.5px solid var(--border); transform: translateY(120%); transition: transform 0.45s var(--spring); }
-  .pwa-banner.show { transform: translateY(0); }
-  .pwa-banner-icon { font-size: 28px; flex-shrink: 0; }
-  .pwa-banner-text { flex: 1; min-width: 0; }
-  .pwa-banner-title { font-size: 13px; font-weight: 800; color: var(--text-1); }
-  .pwa-banner-sub { font-size: 11px; color: var(--text-2); margin-top: 2px; }
-  .pwa-banner-install { background: var(--brand); color: #fff; border: none; border-radius: 10px; padding: 8px 14px; font-size: 13px; font-weight: 700; cursor: pointer; flex-shrink: 0; transition: transform 0.15s var(--spring); }
-  .pwa-banner-install:active { transform: scale(0.93); }
-  .pwa-banner-close { background: transparent; border: none; color: var(--text-2); font-size: 18px; cursor: pointer; padding: 4px; flex-shrink: 0; }
+
 
   /* ── Feature #6: Shooting Zones Heat Map ── */
   .zones-section { margin: 24px 0; max-width: 100%; overflow: hidden; }
@@ -3776,7 +3768,7 @@ function markComplete() {
 
 /* ─── INIT ───────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
-    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 });
 
     /* ─── ONBOARDING JS (Feature #1) ─────────────────────── */
@@ -5194,71 +5186,7 @@ document.addEventListener('DOMContentLoaded', () => {
 })();
 
 
-// ── Feature #20: PWA Install Banner ──
-(function() {
-  var DISMISSED_KEY = 'hoopai_pwa_dismissed';
-  var deferredPrompt = null;
 
-  window.addEventListener('beforeinstallprompt', function(e) {
-    e.preventDefault();
-    deferredPrompt = e;
-    // Show banner if not dismissed
-    if (!localStorage.getItem(DISMISSED_KEY)) {
-      setTimeout(showPWABanner, 3000);
-    }
-  });
-
-  function showPWABanner() {
-    var banner = document.getElementById('pwaBanner');
-    if (banner) banner.classList.add('show');
-  }
-
-  function hidePWABanner() {
-    var banner = document.getElementById('pwaBanner');
-    if (banner) banner.classList.remove('show');
-  }
-
-  window.triggerPWAInstall = function() {
-    hidePWABanner();
-    if (!deferredPrompt) {
-      // Fallback for iOS: show manual instructions
-      alert('To install: tap the Share button ⧁ then "Add to Home Screen".');
-      return;
-    }
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.then(function(result) {
-      if (result.outcome === 'accepted') {
-        localStorage.setItem(DISMISSED_KEY, '1');
-      }
-      deferredPrompt = null;
-    });
-  };
-
-  window.dismissPWABanner = function() {
-    hidePWABanner();
-    localStorage.setItem(DISMISSED_KEY, '1');
-  };
-
-  // iOS detection — show after delay with manual instructions link
-  window.addEventListener('load', function() {
-    var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-    var isStandalone = window.navigator.standalone === true;
-    if (isIOS && !isStandalone && !localStorage.getItem(DISMISSED_KEY)) {
-      // Show banner with iOS-specific message
-      setTimeout(function() {
-        var sub = document.querySelector('.pwa-banner-sub');
-        if (sub) sub.textContent = 'Tap Share ⧁ then "Add to Home Screen".';
-        showPWABanner();
-      }, 4000);
-    }
-  });
-
-  // Hide after install
-  window.addEventListener('appinstalled', function() {
-    hidePWABanner();
-    localStorage.setItem(DISMISSED_KEY, '1');
-  });
-})();
 
 // ── Feature #6: Shooting Zones Heat Map ──
 (function() {
@@ -7268,6 +7196,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ── Feature #40: PWA Install Banner ──
 (function() {
   var _deferredPrompt = null;
+  var _promptFired = false;
   var DISMISS_KEY = 'hoopai_pwa_dismiss';
   var DISMISS_DAYS = 7;
 
@@ -7289,6 +7218,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   window.addEventListener('beforeinstallprompt', function(e) {
+    _promptFired = true;
     e.preventDefault();
     _deferredPrompt = e;
     if (!isDismissed()) {
@@ -7328,16 +7258,18 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // For iOS / browsers without beforeinstallprompt — show after 3 sessions
-  if (!window.matchMedia('(display-mode: standalone)').matches) {
-    var visits = parseInt(localStorage.getItem('hoopai_visit_count') || '0', 10) + 1;
-    localStorage.setItem('hoopai_visit_count', visits.toString());
-    if (visits >= 3 && !isDismissed() && !_deferredPrompt) {
-      var ua = navigator.userAgent.toLowerCase();
-      if (ua.indexOf('iphone') > -1 || ua.indexOf('ipad') > -1 || ua.indexOf('safari') > -1) {
-        setTimeout(showBanner, 3000);
+  window.addEventListener('load', function() { setTimeout(function() {
+    if (!window.matchMedia('(display-mode: standalone)').matches && !window.navigator.standalone) {
+      var visits = parseInt(localStorage.getItem('hoopai_visit_count') || '0', 10) + 1;
+      localStorage.setItem('hoopai_visit_count', visits.toString());
+      if (visits >= 3 && !isDismissed() && !_promptFired) {
+        var ua = navigator.userAgent.toLowerCase();
+        if (ua.indexOf('iphone') > -1 || ua.indexOf('ipad') > -1 || ua.indexOf('safari') > -1) {
+          setTimeout(showBanner, 3000);
+        }
       }
     }
-  }
+  }, 2000); });
 
 })();
 
@@ -7541,16 +7473,7 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
 
 
-  <!-- Feature #20: PWA Install Banner -->
-  <div class="pwa-banner" id="pwaBanner">
-    <div class="pwa-banner-icon">🏀</div>
-    <div class="pwa-banner-text">
-      <div class="pwa-banner-title">Add HoopAI to Home Screen</div>
-      <div class="pwa-banner-sub">Train faster — one tap from your home screen.</div>
-    </div>
-    <button class="pwa-banner-install" id="pwaInstallBtn" onclick="triggerPWAInstall()">Install</button>
-    <button class="pwa-banner-close" onclick="dismissPWABanner()">✕</button>
-  </div>
+
 
 </body>
 </html>

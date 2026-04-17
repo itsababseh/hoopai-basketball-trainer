@@ -2,7 +2,7 @@
   "name": "HoopAI - Elite Basketball Training",
   "short_name": "HoopAI",
   "description": "AI-powered basketball shot analysis and elite training workouts",
-  "start_url": "/",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#1a1a1a",
   "theme_color": "#FF6B35",
