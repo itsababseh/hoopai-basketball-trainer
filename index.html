@@ -1405,6 +1405,36 @@
   .coach-next-btn { background: none; border: 1px solid var(--border); color: var(--brand); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
   .coach-next-btn:hover { background: var(--brand); color: #fff; border-color: var(--brand); }
 
+
+  /* ── Feature #12: Drill Library ── */
+  .drill-section { padding: 16px 0; }
+  .drill-section-title { font-size: 18px; font-weight: 800; color: var(--text-1); margin-bottom: 12px; }
+  .drill-filter-row { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; }
+  .drill-filter-chip { padding: 8px 18px; border-radius: 30px; background: var(--surface2); border: 1.5px solid var(--border); color: var(--text-2); font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s var(--spring); flex-shrink: 0; }
+  .drill-filter-chip.active { background: var(--brand); border-color: var(--brand); color: #fff; transform: scale(1.05); }
+  .drill-card { background: var(--surface); border-radius: var(--radius); margin-bottom: 10px; overflow: hidden; border: 1px solid var(--border); }
+  .drill-card-header { display: flex; align-items: center; padding: 14px 16px; cursor: pointer; gap: 12px; }
+  .drill-diff-bar { width: 4px; height: 36px; border-radius: 4px; flex-shrink: 0; }
+  .diff-beginner { background: #4CAF50; }
+  .diff-intermediate { background: var(--brand); }
+  .diff-advanced { background: #F44336; }
+  .drill-info { flex: 1; }
+  .drill-name { font-size: 15px; font-weight: 700; color: var(--text-1); }
+  .drill-meta { display: flex; gap: 8px; margin-top: 3px; align-items: center; }
+  .drill-badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+  .badge-beginner { background: rgba(76,175,80,0.15); color: #4CAF50; }
+  .badge-intermediate { background: rgba(255,107,53,0.15); color: var(--brand); }
+  .badge-advanced { background: rgba(244,67,54,0.15); color: #F44336; }
+  .drill-reps { font-size: 12px; color: var(--text-2); }
+  .drill-chevron { font-size: 14px; color: var(--text-2); transition: transform 0.25s var(--spring); }
+  .drill-card.open .drill-chevron { transform: rotate(180deg); }
+  .drill-body { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+  .drill-card.open .drill-body { max-height: 300px; }
+  .drill-body-inner { padding: 0 16px 16px; }
+  .drill-desc { font-size: 13px; color: var(--text-2); line-height: 1.6; margin-bottom: 12px; }
+  .drill-start-btn { background: var(--brand); color: #fff; border: none; border-radius: 10px; padding: 9px 20px; font-size: 13px; font-weight: 700; cursor: pointer; transition: transform 0.2s var(--spring); }
+  .drill-start-btn:active { transform: scale(0.95); }
+
 </style>
 </head>
 <body>
@@ -1759,6 +1789,266 @@
 
         <!-- ── TRAIN ──────────────────────────────────────────── -->
         <div id="screen-train" class="screen">
+            <!-- Feature #12: Drill Library -->
+            <div class="drill-section" style="padding:16px;">
+              <div class="drill-section-title">&#128218; Drill Library</div>
+              <div class="drill-filter-row">
+                <button class="drill-filter-chip active" onclick="filterDrills(this,'all')">All</button>
+                <button class="drill-filter-chip" onclick="filterDrills(this,'shooting')">&#127944; Shooting</button>
+                <button class="drill-filter-chip" onclick="filterDrills(this,'ballhandling')">&#129334; Ball Handling</button>
+                <button class="drill-filter-chip" onclick="filterDrills(this,'footwork')">&#128099; Footwork</button>
+              </div>
+              <div id="drillList">
+                <div class="drill-card" data-cat="shooting" onclick="toggleDrill(this)">
+                  <div class="drill-card-header">
+                    <div class="drill-diff-bar diff-beginner"></div>
+                    <div class="drill-info">
+                      <div class="drill-name">Spot Shooting</div>
+                      <div class="drill-meta">
+                        <span class="drill-badge badge-beginner">Beginner</span>
+                        <span class="drill-reps">&#128257; 5×10</span>
+                      </div>
+                    </div>
+                    <span class="drill-chevron">&#9662;</span>
+                  </div>
+                  <div class="drill-body">
+                    <div class="drill-body-inner">
+                      <div class="drill-desc">Place markers at 5 spots around the arc. Make 10 shots from each spot before moving. Focus on consistent form — feet, aim, follow-through.</div>
+                      <button class="drill-start-btn" onclick="event.stopPropagation(); startDrill('Spot Shooting')">&#9654; Start Drill</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="drill-card" data-cat="shooting" onclick="toggleDrill(this)">
+                  <div class="drill-card-header">
+                    <div class="drill-diff-bar diff-beginner"></div>
+                    <div class="drill-info">
+                      <div class="drill-name">Around the World</div>
+                      <div class="drill-meta">
+                        <span class="drill-badge badge-beginner">Beginner</span>
+                        <span class="drill-reps">&#128257; 1 round</span>
+                      </div>
+                    </div>
+                    <span class="drill-chevron">&#9662;</span>
+                  </div>
+                  <div class="drill-body">
+                    <div class="drill-body-inner">
+                      <div class="drill-desc">7 spots from corner to corner. Make a shot before advancing. Miss = start that spot again. Complete the full arc for 1 round.</div>
+                      <button class="drill-start-btn" onclick="event.stopPropagation(); startDrill('Around the World')">&#9654; Start Drill</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="drill-card" data-cat="shooting" onclick="toggleDrill(this)">
+                  <div class="drill-card-header">
+                    <div class="drill-diff-bar diff-intermediate"></div>
+                    <div class="drill-info">
+                      <div class="drill-name">Catch & Shoot</div>
+                      <div class="drill-meta">
+                        <span class="drill-badge badge-intermediate">Intermediate</span>
+                        <span class="drill-reps">&#128257; 3×20</span>
+                      </div>
+                    </div>
+                    <span class="drill-chevron">&#9662;</span>
+                  </div>
+                  <div class="drill-body">
+                    <div class="drill-body-inner">
+                      <div class="drill-desc">Set the ball on the floor, step to it, catch with hands ready, and shoot in one fluid motion. Simulate catching a pass from a teammate.</div>
+                      <button class="drill-start-btn" onclick="event.stopPropagation(); startDrill('Catch & Shoot')">&#9654; Start Drill</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="drill-card" data-cat="shooting" onclick="toggleDrill(this)">
+                  <div class="drill-card-header">
+                    <div class="drill-diff-bar diff-intermediate"></div>
+                    <div class="drill-info">
+                      <div class="drill-name">Off-Dribble Pull-Up</div>
+                      <div class="drill-meta">
+                        <span class="drill-badge badge-intermediate">Intermediate</span>
+                        <span class="drill-reps">&#128257; 3×10</span>
+                      </div>
+                    </div>
+                    <span class="drill-chevron">&#9662;</span>
+                  </div>
+                  <div class="drill-body">
+                    <div class="drill-body-inner">
+                      <div class="drill-desc">Dribble hard left or right, plant and pull up for a jumper. Focus on balance at the moment of elevation — don't fade sideways.</div>
+                      <button class="drill-start-btn" onclick="event.stopPropagation(); startDrill('Off-Dribble Pull-Up')">&#9654; Start Drill</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="drill-card" data-cat="shooting" onclick="toggleDrill(this)">
+                  <div class="drill-card-header">
+                    <div class="drill-diff-bar diff-advanced"></div>
+                    <div class="drill-info">
+                      <div class="drill-name">Elbow Series</div>
+                      <div class="drill-meta">
+                        <span class="drill-badge badge-advanced">Advanced</span>
+                        <span class="drill-reps">&#128257; 4×15</span>
+                      </div>
+                    </div>
+                    <span class="drill-chevron">&#9662;</span>
+                  </div>
+                  <div class="drill-body">
+                    <div class="drill-body-inner">
+                      <div class="drill-desc">Alternate between left and right elbow. Each make = step back 1 foot. Miss = reset to elbow. Works mid-range consistency under fatigue.</div>
+                      <button class="drill-start-btn" onclick="event.stopPropagation(); startDrill('Elbow Series')">&#9654; Start Drill</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="drill-card" data-cat="shooting" onclick="toggleDrill(this)">
+                  <div class="drill-card-header">
+                    <div class="drill-diff-bar diff-beginner"></div>
+                    <div class="drill-info">
+                      <div class="drill-name">Free Throw Pressure</div>
+                      <div class="drill-meta">
+                        <span class="drill-badge badge-beginner">Beginner</span>
+                        <span class="drill-reps">&#128257; 10 sets</span>
+                      </div>
+                    </div>
+                    <span class="drill-chevron">&#9662;</span>
+                  </div>
+                  <div class="drill-body">
+                    <div class="drill-body-inner">
+                      <div class="drill-desc">Shoot 2 free throws per set. If you miss either = 10 pushups. Builds real game pressure on free throws. Track made sets.</div>
+                      <button class="drill-start-btn" onclick="event.stopPropagation(); startDrill('Free Throw Pressure')">&#9654; Start Drill</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="drill-card" data-cat="ballhandling" onclick="toggleDrill(this)">
+                  <div class="drill-card-header">
+                    <div class="drill-diff-bar diff-beginner"></div>
+                    <div class="drill-info">
+                      <div class="drill-name">Two-Ball Dribble</div>
+                      <div class="drill-meta">
+                        <span class="drill-badge badge-beginner">Beginner</span>
+                        <span class="drill-reps">&#128257; 3×60s</span>
+                      </div>
+                    </div>
+                    <span class="drill-chevron">&#9662;</span>
+                  </div>
+                  <div class="drill-body">
+                    <div class="drill-body-inner">
+                      <div class="drill-desc">Dribble both balls simultaneously at hip height. Keep eyes up. Progress to alternating rhythm once both balls stay controlled.</div>
+                      <button class="drill-start-btn" onclick="event.stopPropagation(); startDrill('Two-Ball Dribble')">&#9654; Start Drill</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="drill-card" data-cat="ballhandling" onclick="toggleDrill(this)">
+                  <div class="drill-card-header">
+                    <div class="drill-diff-bar diff-intermediate"></div>
+                    <div class="drill-info">
+                      <div class="drill-name">Crossover Series</div>
+                      <div class="drill-meta">
+                        <span class="drill-badge badge-intermediate">Intermediate</span>
+                        <span class="drill-reps">&#128257; 3×30s</span>
+                      </div>
+                    </div>
+                    <span class="drill-chevron">&#9662;</span>
+                  </div>
+                  <div class="drill-body">
+                    <div class="drill-body-inner">
+                      <div class="drill-desc">Low, hard crossovers — contact point at knee height. Crossover → between legs → behind back. Keep the ball below the waist always.</div>
+                      <button class="drill-start-btn" onclick="event.stopPropagation(); startDrill('Crossover Series')">&#9654; Start Drill</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="drill-card" data-cat="ballhandling" onclick="toggleDrill(this)">
+                  <div class="drill-card-header">
+                    <div class="drill-diff-bar diff-beginner"></div>
+                    <div class="drill-info">
+                      <div class="drill-name">Figure 8</div>
+                      <div class="drill-meta">
+                        <span class="drill-badge badge-beginner">Beginner</span>
+                        <span class="drill-reps">&#128257; 3×45s</span>
+                      </div>
+                    </div>
+                    <span class="drill-chevron">&#9662;</span>
+                  </div>
+                  <div class="drill-body">
+                    <div class="drill-body-inner">
+                      <div class="drill-desc">Dribble the ball in a figure 8 around both legs continuously. Stay low, keep head up. Increase speed each set.</div>
+                      <button class="drill-start-btn" onclick="event.stopPropagation(); startDrill('Figure 8')">&#9654; Start Drill</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="drill-card" data-cat="ballhandling" onclick="toggleDrill(this)">
+                  <div class="drill-card-header">
+                    <div class="drill-diff-bar diff-advanced"></div>
+                    <div class="drill-info">
+                      <div class="drill-name">1-Dribble Pull-Up</div>
+                      <div class="drill-meta">
+                        <span class="drill-badge badge-advanced">Advanced</span>
+                        <span class="drill-reps">&#128257; 3×10 each side</span>
+                      </div>
+                    </div>
+                    <span class="drill-chevron">&#9662;</span>
+                  </div>
+                  <div class="drill-body">
+                    <div class="drill-body-inner">
+                      <div class="drill-desc">From wing, one hard dribble attack, gather, and pull up. React to imaginary defender. Work both left and right attacks equally.</div>
+                      <button class="drill-start-btn" onclick="event.stopPropagation(); startDrill('1-Dribble Pull-Up')">&#9654; Start Drill</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="drill-card" data-cat="footwork" onclick="toggleDrill(this)">
+                  <div class="drill-card-header">
+                    <div class="drill-diff-bar diff-beginner"></div>
+                    <div class="drill-info">
+                      <div class="drill-name">Jab Step Series</div>
+                      <div class="drill-meta">
+                        <span class="drill-badge badge-beginner">Beginner</span>
+                        <span class="drill-reps">&#128257; 3×10 each</span>
+                      </div>
+                    </div>
+                    <span class="drill-chevron">&#9662;</span>
+                  </div>
+                  <div class="drill-body">
+                    <div class="drill-body-inner">
+                      <div class="drill-desc">From triple threat: jab right, jab left, jab-cross, jab-go. Sell each jab with your eyes and shoulders before reacting.</div>
+                      <button class="drill-start-btn" onclick="event.stopPropagation(); startDrill('Jab Step Series')">&#9654; Start Drill</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="drill-card" data-cat="footwork" onclick="toggleDrill(this)">
+                  <div class="drill-card-header">
+                    <div class="drill-diff-bar diff-intermediate"></div>
+                    <div class="drill-info">
+                      <div class="drill-name">Pivot & Seal</div>
+                      <div class="drill-meta">
+                        <span class="drill-badge badge-intermediate">Intermediate</span>
+                        <span class="drill-reps">&#128257; 3×10</span>
+                      </div>
+                    </div>
+                    <span class="drill-chevron">&#9662;</span>
+                  </div>
+                  <div class="drill-body">
+                    <div class="drill-body-inner">
+                      <div class="drill-desc">Catch ball, front pivot, reverse pivot, drop step. Build pivot speed until the footwork is automatic — no hesitation.</div>
+                      <button class="drill-start-btn" onclick="event.stopPropagation(); startDrill('Pivot & Seal')">&#9654; Start Drill</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="drill-card" data-cat="footwork" onclick="toggleDrill(this)">
+                  <div class="drill-card-header">
+                    <div class="drill-diff-bar diff-advanced"></div>
+                    <div class="drill-info">
+                      <div class="drill-name">Hop Step Finish</div>
+                      <div class="drill-meta">
+                        <span class="drill-badge badge-advanced">Advanced</span>
+                        <span class="drill-reps">&#128257; 3×10</span>
+                      </div>
+                    </div>
+                    <span class="drill-chevron">&#9662;</span>
+                  </div>
+                  <div class="drill-body">
+                    <div class="drill-body-inner">
+                      <div class="drill-desc">Attack baseline, gather off two feet (hop step), finish at the backboard. Alternate sides. Key: keep the ball high through the gather.</div>
+                      <button class="drill-start-btn" onclick="event.stopPropagation(); startDrill('Hop Step Finish')">&#9654; Start Drill</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
 
             <!-- Featured: By Any Means Basketball -->
             <div class="featured-trainer">
@@ -3127,6 +3417,35 @@ document.addEventListener('DOMContentLoaded', () => {
   window.selectShotType = function(el, type) { if (_origSelectShot) _origSelectShot(el, type); tipCycleIdx = 0; refreshCoachTip(); };
 
   document.addEventListener('DOMContentLoaded', refreshCoachTip);
+})();
+
+
+// ── Feature #12: Drill Library ──
+(function() {
+  window.toggleDrill = function(card) {
+    var isOpen = card.classList.contains('open');
+    document.querySelectorAll('.drill-card.open').forEach(function(c) { c.classList.remove('open'); });
+    if (!isOpen) card.classList.add('open');
+  };
+
+  window.filterDrills = function(btn, cat) {
+    document.querySelectorAll('.drill-filter-chip').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    document.querySelectorAll('.drill-card').forEach(function(card) {
+      var cardCat = card.getAttribute('data-cat');
+      card.style.display = (cat === 'all' || cardCat === cat) ? 'block' : 'none';
+    });
+  };
+
+  window.startDrill = function(name) {
+    var st = document.getElementById('statusText');
+    if (st) st.textContent = '▶ Drill started: ' + name + ' — switch to Record tab to track shots!';
+    // Store active drill name for timer feature
+    window.activeDrillName = name;
+    // Switch to record tab
+    var recordTab = document.querySelector('[data-tab="record"]');
+    if (recordTab) recordTab.click();
+  };
 })();
 
 </script>
