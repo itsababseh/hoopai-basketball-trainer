@@ -1474,6 +1474,17 @@
   .zone-tooltip.visible { opacity: 1; }
   .zones-legend { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; font-size: 12px; color: var(--text-2); }
   .zones-legend-bar { width: 80px; height: 8px; border-radius: 4px; background: linear-gradient(to right, #2196F3, #4CAF50, #FF6B35, #F44336); }
+  /* Feature #22: Voice Feedback */
+  .voice-toggle-row { display: flex; align-items: center; justify-content: space-between; margin: 0 0 12px; padding: 10px 14px; background: var(--surface); border-radius: 12px; }
+  .voice-toggle-label { font-size: 13px; font-weight: 700; color: var(--text-1); }
+  .voice-toggle-sub { font-size: 11px; color: var(--text-2); margin-top: 1px; }
+  .voice-switch { position: relative; width: 44px; height: 24px; }
+  .voice-switch input { opacity: 0; width: 0; height: 0; }
+  .voice-slider { position: absolute; inset: 0; background: #444; border-radius: 24px; cursor: pointer; transition: background 0.3s; }
+  .voice-slider:before { content: ''; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: transform 0.3s var(--spring); }
+  .voice-switch input:checked + .voice-slider { background: var(--brand); }
+  .voice-switch input:checked + .voice-slider:before { transform: translateX(20px); }
+
   /* Feature #21: Shot Zone Heatmap */
   .heatmap-toggle-row { display: flex; align-items: center; justify-content: space-between; margin: 0 0 8px; }
   .heatmap-toggle-btn { font-size: 12px; font-weight: 700; padding: 5px 14px; border-radius: 20px; border: 1.5px solid var(--brand); background: transparent; color: var(--brand); cursor: pointer; transition: background 0.2s, color 0.2s; }
@@ -1818,6 +1829,18 @@
         </div>
 
         
+
+        <!-- Feature #22: Voice Feedback Toggle -->
+        <div class="voice-toggle-row">
+          <div>
+            <div class="voice-toggle-label">🔊 Voice Feedback</div>
+            <div class="voice-toggle-sub">Hear make/miss called out loud</div>
+          </div>
+          <label class="voice-switch">
+            <input type="checkbox" id="voiceToggle" onchange="voiceToggleChanged(this)">
+            <span class="voice-slider"></span>
+          </label>
+        </div>
 
         <!-- Feature #14: Workout Timer -->
         <div class="timer-section">
@@ -4008,6 +4031,63 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Dev reset hook
+  /* ── Feature #22: Voice Feedback ───────────────────────────── */
+  (function() {
+    var VOICE_KEY = 'hoopai_voice_enabled';
+    var synth = window.speechSynthesis || null;
+    var voiceEnabled = localStorage.getItem(VOICE_KEY) === '1';
+
+    function initToggle() {
+      var chk = document.getElementById('voiceToggle');
+      if (chk) chk.checked = voiceEnabled;
+    }
+
+    window.voiceToggleChanged = function(chk) {
+      voiceEnabled = chk.checked;
+      localStorage.setItem(VOICE_KEY, voiceEnabled ? '1' : '0');
+      if (voiceEnabled && synth) {
+        var u = new SpeechSynthesisUtterance("Voice feedback on");
+        u.rate = 1.1; u.pitch = 1.1; u.volume = 0.8;
+        synth.speak(u);
+      }
+    };
+
+    function speak(text) {
+      if (!voiceEnabled || !synth) return;
+      synth.cancel();
+      var u = new SpeechSynthesisUtterance(text);
+      u.rate = 1.2; u.pitch = 1.0; u.volume = 1.0;
+      synth.speak(u);
+    }
+
+    var MAKE_PHRASES = [
+      "Nice shot!", "Money!", "Buckets!", "That's a make!", "Cash!",
+      "Good shot!", "Splash!", "Nothing but net!", "Yes!"
+    ];
+    var MISS_PHRASES = [
+      "Miss.", "Brick.", "No good.", "Off the mark.", "Keep shooting!",
+      "Shake it off.", "Next one.", "Close!"
+    ];
+    function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+    // Hook recordMake
+    var _origMakeVoice = window.recordMake;
+    window.recordMake = function(el) {
+      if (_origMakeVoice) _origMakeVoice(el);
+      speak(rand(MAKE_PHRASES));
+    };
+
+    // Hook recordMiss
+    var _origMissVoice = window.recordMiss;
+    window.recordMiss = function(el) {
+      if (_origMissVoice) _origMissVoice(el);
+      speak(rand(MISS_PHRASES));
+    };
+
+    document.addEventListener('DOMContentLoaded', initToggle);
+  })();
+  /* ── End Feature #22 ────────────────────────────────────────── */
+
   /* ── Feature #21: Shot Zone Heatmap ─────────────────────────── */
   (function() {
     var heatmapActive = false;
