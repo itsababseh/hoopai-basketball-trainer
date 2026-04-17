@@ -400,6 +400,36 @@
     .camera-empty-text { font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.8); }
     .camera-empty-btn { background: var(--brand); color: #fff; border: none; border-radius: 24px; padding: 12px 28px; font-size: 15px; font-weight: 800; cursor: pointer; margin-top: 4px; }
 
+    /* ─── WEEKLY GOALS ──────────────────────────────────────── */
+    .wg-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+    .wg-item {
+        background: var(--surface2); border: 1px solid var(--border);
+        border-radius: var(--radius-md); padding: 12px 14px;
+        display: flex; flex-direction: column; gap: 6px;
+    }
+    .wg-item-header { display: flex; justify-content: space-between; align-items: center; }
+    .wg-item-label { font-size: 13px; font-weight: 700; color: var(--text-1); }
+    .wg-item-count { font-size: 13px; color: var(--brand); font-weight: 700; }
+    .wg-bar-bg { height: 6px; background: var(--surface3); border-radius: 99px; overflow: hidden; }
+    .wg-bar-fill { height: 100%; background: var(--brand); border-radius: 99px; transition: width 0.4s var(--ease); }
+    .wg-item-target { display: flex; align-items: center; gap: 6px; }
+    .wg-target-input {
+        width: 56px; padding: 5px 8px; border-radius: 8px;
+        background: var(--surface3); border: 1px solid var(--border);
+        color: var(--text-1); font-size: 13px; text-align: center;
+    }
+    .wg-target-label { font-size: 12px; color: var(--text-3); }
+    .wg-reset-row { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
+    .wg-week-label { font-size: 12px; color: var(--text-3); }
+    .wg-reset-btn {
+        font-size: 12px; font-weight: 700; color: var(--text-2);
+        background: var(--surface3); border: 1px solid var(--border);
+        border-radius: 12px; padding: 5px 14px; cursor: pointer;
+        transition: background 0.2s;
+    }
+    .wg-reset-btn:active { background: var(--surface2); }
+
+    /* ─── SCOUTING SECTION ───────────────────────────────────── */
     /* ─── SCOUTING SECTION ───────────────────────────────────── */
     .scouting-form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
     .scouting-input {
@@ -2618,6 +2648,18 @@
             <button class="scouting-save-btn" onclick="window.saveScout()">Save Scout</button>
           </div>
           <div id="scoutList"><div class="journal-empty">No scouting reports yet.</div></div>
+        </div>
+
+        <!-- Feature #29: Weekly Goal Setter -->
+        <div class="journal-section" id="weeklyGoalsSection">
+          <div class="journal-section-title">🎯 Weekly Goals</div>
+          <div class="wg-grid" id="weeklyGoalGrid">
+            <!-- rendered by JS -->
+          </div>
+          <div class="wg-reset-row">
+            <span class="wg-week-label" id="wgWeekLabel"></span>
+            <button class="wg-reset-btn" onclick="window.resetWeeklyGoals()">Reset Week</button>
+          </div>
         </div>
 
         <!-- Feature #15: Personal Records & Milestones -->
@@ -5294,6 +5336,88 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Render on load
     renderScouts();
+})();
+
+
+/* ─── FEATURE #29: WEEKLY GOAL SETTER ───────────────────── */
+(function() {
+    var WG_KEY = 'hoopai_weekly_goals';
+    var GOALS = [
+        { id: 'sessions', label: '📅 Sessions', key: 'hoopai_total_sessions', defaultTarget: 5 },
+        { id: 'makes',    label: '🏀 Total Makes', key: 'hoopai_total_makes', defaultTarget: 200 },
+        { id: 'streak',   label: '🔥 Day Streak', key: 'hoopai_streak', defaultTarget: 5 },
+        { id: 'accuracy', label: '🎯 Avg Accuracy %', key: null, defaultTarget: 50 },
+        { id: 'drills',   label: '⏱ Drills Done', key: 'hoopai_drills_done', defaultTarget: 10 }
+    ];
+
+    function getWG() {
+        try { return JSON.parse(localStorage.getItem(WG_KEY) || '{}'); } catch(e) { return {}; }
+    }
+    function saveWG(obj) { localStorage.setItem(WG_KEY, JSON.stringify(obj)); }
+
+    function getCurrentValue(goal) {
+        if (goal.id === 'accuracy') {
+            var makes = parseInt(localStorage.getItem('hoopai_total_makes') || '0');
+            var atts  = parseInt(localStorage.getItem('hoopai_total_attempts') || '0');
+            return atts > 0 ? Math.round(makes / atts * 100) : 0;
+        }
+        return parseInt(localStorage.getItem(goal.key) || '0');
+    }
+
+    function getWeekLabel() {
+        var now = new Date();
+        var day = now.getDay();
+        var monday = new Date(now);
+        monday.setDate(now.getDate() - ((day + 6) % 7));
+        var sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        var fmt = function(d) { return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); };
+        return 'Week of ' + fmt(monday) + ' – ' + fmt(sunday);
+    }
+
+    function renderWG() {
+        var grid = document.getElementById('weeklyGoalGrid');
+        var lbl  = document.getElementById('wgWeekLabel');
+        if (!grid) return;
+        if (lbl) lbl.textContent = getWeekLabel();
+        var wg = getWG();
+        grid.innerHTML = GOALS.map(function(g) {
+            var target = parseInt(wg[g.id + '_target'] || g.defaultTarget);
+            var val    = getCurrentValue(g);
+            var pct    = Math.min(100, Math.round(val / target * 100));
+            return '<div class="wg-item">' +
+                '<div class="wg-item-header">' +
+                    '<span class="wg-item-label">' + g.label + '</span>' +
+                    '<span class="wg-item-count">' + val + ' / ' + target + '</span>' +
+                '</div>' +
+                '<div class="wg-bar-bg"><div class="wg-bar-fill" style="width:' + pct + '%"></div></div>' +
+                '<div class="wg-item-target">' +
+                    '<input class="wg-target-input" type="number" min="1" max="9999" value="' + target + '" ' +
+                        'data-wgid="' + g.id + '" onchange="window.setWGTarget(this.dataset.wgid, this.value)" />' +
+                    '<span class="wg-target-label">target</span>' +
+                '</div>' +
+            '</div>';
+        }).join('');
+    }
+
+    window.setWGTarget = function(id, val) {
+        var wg = getWG();
+        wg[id + '_target'] = Math.max(1, parseInt(val) || 1);
+        saveWG(wg);
+        renderWG();
+    };
+
+    window.resetWeeklyGoals = function() {
+        saveWG({});
+        renderWG();
+    };
+
+    renderWG();
+
+    // Re-render weekly goals when tab becomes visible
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) renderWG();
+    });
 })();
 
 </script>
