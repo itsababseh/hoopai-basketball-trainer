@@ -1474,6 +1474,15 @@
   .zone-tooltip.visible { opacity: 1; }
   .zones-legend { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; font-size: 12px; color: var(--text-2); }
   .zones-legend-bar { width: 80px; height: 8px; border-radius: 4px; background: linear-gradient(to right, #2196F3, #4CAF50, #FF6B35, #F44336); }
+  /* Feature #24: Daily Streak Fire Calendar */
+  .fire-calendar { display: flex; justify-content: space-between; margin-top: 14px; gap: 4px; }
+  .fire-day { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .fire-day-icon { font-size: 20px; line-height: 1; }
+  .fire-day-label { font-size: 9px; font-weight: 700; color: var(--text-2); text-transform: uppercase; }
+  .fire-day.today .fire-day-label { color: var(--brand); }
+  .streak-toast { position: fixed; top: 72px; left: 50%; transform: translateX(-50%) translateY(-80px); background: linear-gradient(135deg, var(--brand), #FFB347); color: #fff; border-radius: 24px; padding: 10px 20px; font-size: 14px; font-weight: 800; z-index: 5000; transition: transform 0.5s var(--spring), opacity 0.5s; opacity: 0; white-space: nowrap; pointer-events: none; box-shadow: 0 4px 20px rgba(255,107,53,0.5); }
+  .streak-toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
   /* Feature #23: Session Notes / Journal */
   .session-notes-wrap { margin: 16px 0 0; }
   .session-notes-label { font-size: 12px; font-weight: 700; color: var(--text-2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -2440,6 +2449,7 @@
             </div>
           </div>
           <div class="streak-warning" id="streakWarning">⚠️ Practice today to keep your streak alive!</div>
+          <div class="fire-calendar" id="fireCalendar"></div>
         </div>
 
         <div class="goal-section">
@@ -4051,6 +4061,86 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Dev reset hook
+  /* ── Feature #24: Daily Streak Fire Calendar ───────────────── */
+  (function() {
+    var DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    var LAST_KEY = 'hoopai_last_session';
+    var STREAK_KEY = 'hoopai_streak';
+    var BEST_STREAK_KEY = 'hoopai_best_streak';
+    var MILESTONES = [3, 7, 14, 30, 50, 100];
+
+    function todayStr() {
+      var d = new Date();
+      return d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
+    }
+    function dateStr(d) {
+      return d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
+    }
+
+    function getPracticedDays() {
+      // Returns Set of date strings practiced (from daily shots keys)
+      var keys = Object.keys(localStorage);
+      var practiced = {};
+      keys.forEach(function(k) {
+        if (k.indexOf('hoopai_daily_shots_') === 0) {
+          var val = parseInt(localStorage.getItem(k) || '0');
+          if (val > 0) practiced[k.replace('hoopai_daily_shots_', '')] = true;
+        }
+      });
+      return practiced;
+    }
+
+    window.renderFireCalendar = function() {
+      var cal = document.getElementById('fireCalendar');
+      if (!cal) return;
+      var practiced = getPracticedDays();
+      var today = new Date();
+      var cells = '';
+      for (var i = 6; i >= 0; i--) {
+        var d = new Date(today);
+        d.setDate(today.getDate() - i);
+        var key = dateStr(d);
+        var hasPractice = !!practiced[key];
+        var isToday = (i === 0);
+        var icon = hasPractice ? '🔥' : (isToday ? '⭕' : '○');
+        cells += '<div class="fire-day' + (isToday ? ' today' : '') + '">' +
+          '<span class="fire-day-icon">' + icon + '</span>' +
+          '<span class="fire-day-label">' + DAY_NAMES[d.getDay()] + '</span>' +
+          '</div>';
+      }
+      cal.innerHTML = cells;
+    };
+
+    function showStreakToast(streak) {
+      var toast = document.getElementById('streakToast');
+      if (!toast) return;
+      toast.textContent = '🔥 ' + streak + '-Day Streak! Keep it up!';
+      toast.classList.add('show');
+      setTimeout(function() { toast.classList.remove('show'); }, 3000);
+    }
+
+    // Hook saveSummary to check milestones
+    var _origSaveStreak = window.saveSummary;
+    window.saveSummary = function() {
+      if (_origSaveStreak) _origSaveStreak();
+      setTimeout(function() {
+        var streak = parseInt(localStorage.getItem(STREAK_KEY) || '0');
+        if (MILESTONES.indexOf(streak) !== -1) showStreakToast(streak);
+        window.renderFireCalendar();
+      }, 200);
+    };
+
+    // Hook showTab
+    var _origShowFire = window.showTab;
+    window.showTab = function(tab) {
+      if (_origShowFire) _origShowFire(tab);
+      if (tab === 'progress') setTimeout(window.renderFireCalendar, 60);
+    };
+
+    document.addEventListener('DOMContentLoaded', window.renderFireCalendar);
+  })();
+  /* ── End Feature #24 ────────────────────────────────────────── */
+
   /* ── Feature #23: Session Notes / Journal ──────────────────── */
   (function() {
     var JOURNAL_KEY = 'hoopai_journal';
@@ -4941,6 +5031,9 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
   </div>
 
+
+  <!-- Feature #24: Streak Toast -->
+  <div class="streak-toast" id="streakToast"></div>
 
   <!-- Feature #16: Form Tips Overlay -->
   <div class="form-sheet" id="formSheet">
