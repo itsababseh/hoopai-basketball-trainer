@@ -2708,18 +2708,40 @@ const emptyView = document.getElementById('cameraEmpty');
 async function startCamera() {
     try {
         setStatus('yellow', 'Starting camera…');
-        stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode:'environment', width:{ideal:1280}, height:{ideal:720} },
-            audio: true
-        });
+        var constraints = [
+            { video: { facingMode:'environment', width:{ideal:1280}, height:{ideal:720} }, audio: true },
+            { video: { facingMode:'user' }, audio: true },
+            { video: true, audio: true }
+        ];
+        var lastErr;
+        for (var ci = 0; ci < constraints.length; ci++) {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia(constraints[ci]);
+                break;
+            } catch(err) { lastErr = err; }
+        }
+        if (!stream) throw lastErr;
         videoEl.srcObject = stream;
+        videoEl.play().catch(function(){});
         emptyView.style.display = 'none';
         overlay.classList.add('visible');
         document.getElementById('btnStartCam').classList.add('hidden');
         document.getElementById('btnRecord').disabled = false;
         setStatus('green', 'Camera active — AI ready');
     } catch(e) {
-        setStatus('', 'Camera access denied');
+        setStatus('', 'Camera unavailable: ' + (e.message || 'access denied'));
+        if (emptyView) {
+            emptyView.style.display = 'flex';
+            emptyView.innerHTML = '<p style="color:var(--text-2);text-align:center;padding:1rem;">📷 Camera not available.<br>Check browser permissions.</p>';
+        }
+    }
+}
+
+function stopCamera() {
+    if (stream) {
+        stream.getTracks().forEach(function(t){ t.stop(); });
+        stream = null;
+        videoEl.srcObject = null;
     }
 }
 
@@ -3897,14 +3919,22 @@ document.addEventListener('DOMContentLoaded', () => {
     tooltip.style.transform = 'scale(1)';
     tooltip.style.right = 'auto';
     tooltip.style.bottom = 'auto';
-    var tipH = 180;
+    var tipH = 190;
+    var tipW = 280;
+    var vw = window.innerWidth;
+    var vh = window.innerHeight;
+    var leftPos = Math.max(16, Math.min(rect.left + rect.width / 2 - tipW / 2, vw - tipW - 16));
+    var topPos;
     if (position === 'above') {
-      tooltip.style.top = Math.max(8, rect.top - tipH - 16) + 'px';
-      tooltip.style.left = Math.max(16, Math.min(rect.left, window.innerWidth - 300)) + 'px';
+      topPos = rect.top - tipH - 16;
+      if (topPos < 8) { topPos = rect.bottom + 16; } // flip below if off top
     } else {
-      tooltip.style.top = (rect.bottom + 16) + 'px';
-      tooltip.style.left = Math.max(16, Math.min(rect.left, window.innerWidth - 300)) + 'px';
+      topPos = rect.bottom + 16;
+      if (topPos + tipH > vh - 8) { topPos = rect.top - tipH - 16; } // flip above if off bottom
     }
+    topPos = Math.max(8, Math.min(topPos, vh - tipH - 8));
+    tooltip.style.top = topPos + 'px';
+    tooltip.style.left = leftPos + 'px';
   }
 
   function renderStep(idx) {
@@ -3944,7 +3974,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   window.skipOnboarding = function() {
     var overlay = document.getElementById('onboardOverlay');
-    if (overlay) overlay.classList.remove('active');
+    if (overlay) {
+      overlay.classList.remove('active');
+      overlay.style.pointerEvents = 'none';
+      setTimeout(function() {
+        overlay.style.display = 'none';
+      }, 400);
+    }
     localStorage.setItem(DONE_KEY, '1');
   };
 
