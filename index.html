@@ -1414,6 +1414,19 @@
   .share-save-btn { background: var(--brand); color: #fff; }
   .share-close-btn { background: rgba(255,255,255,0.15); color: #fff; }
 
+
+  /* ── Feature #18: Practice Reminder Nudge ── */
+  .reminder-banner { position: fixed; top: 0; left: 0; right: 0; z-index: 500; padding: 12px 16px; background: linear-gradient(135deg, #FF6B35, #FFB347); color: #fff; display: flex; align-items: center; gap: 12px; transform: translateY(-100%); transition: transform 0.4s var(--spring); box-shadow: 0 4px 20px rgba(255,107,53,0.4); }
+  .reminder-banner.show { transform: translateY(0); }
+  .reminder-banner-icon { font-size: 22px; flex-shrink: 0; }
+  .reminder-banner-text { flex: 1; }
+  .reminder-banner-title { font-size: 14px; font-weight: 800; line-height: 1.2; }
+  .reminder-banner-sub { font-size: 11px; opacity: 0.88; margin-top: 2px; }
+  .reminder-banner-close { background: rgba(255,255,255,0.25); border: none; border-radius: 50%; width: 28px; height: 28px; color: #fff; font-size: 14px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+  .reminder-banner-close:hover { background: rgba(255,255,255,0.4); }
+  .reminder-banner-cta { background: rgba(255,255,255,0.25); border: none; border-radius: 12px; padding: 6px 12px; color: #fff; font-size: 12px; font-weight: 700; cursor: pointer; flex-shrink: 0; transition: background 0.2s; }
+  .reminder-banner-cta:hover { background: rgba(255,255,255,0.4); }
+
   /* ── Feature #6: Shooting Zones Heat Map ── */
   .zones-section { margin: 24px 0; }
   .zones-title { font-size: 16px; font-weight: 700; color: var(--text-1); margin-bottom: 12px; }
@@ -1548,6 +1561,17 @@
 </style>
 </head>
 <body>
+  <!-- Feature #18: Practice Reminder Banner -->
+  <div class="reminder-banner" id="reminderBanner">
+    <div class="reminder-banner-icon">🏀</div>
+    <div class="reminder-banner-text">
+      <div class="reminder-banner-title" id="reminderTitle">Time to practice!</div>
+      <div class="reminder-banner-sub" id="reminderSub">Keep your streak alive — tap to start.</div>
+    </div>
+    <button class="reminder-banner-cta" onclick="dismissReminder(true)">Train Now</button>
+    <button class="reminder-banner-close" onclick="dismissReminder(false)">✕</button>
+  </div>
+
 
 <!-- ═══════════════════════════════════════════════════════
      ONBOARDING OVERLAY  (Feature #1)
@@ -3701,6 +3725,66 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
   };
+})();
+
+
+// ── Feature #18: Practice Reminder Nudge ──
+(function() {
+  var SNOOZE_KEY = 'hoopai_reminder_snoozed_until';
+  var LAST_KEY   = 'hoopai_last_session';
+
+  var MESSAGES = [
+    { title: "Time to practice! 🏀", sub: "Keep your streak alive — every rep counts." },
+    { title: "Your court awaits 🔥", sub: "Yesterday's effort deserves today's follow-through." },
+    { title: "Consistency builds champions 🎯", sub: "Tap Train Now to log a quick session." },
+    { title: "Don't break the streak! 📅", sub: "A few makes is all it takes to stay on track." },
+    { title: "Shoot your shot 💪", sub: "The best players show up every day — be one." },
+  ];
+
+  function todayStr() { return new Date().toDateString(); }
+
+  function shouldShow() {
+    // Don't show if already trained today
+    if (localStorage.getItem(LAST_KEY) === todayStr()) return false;
+    // Don't show if snoozed
+    var snoozeUntil = parseInt(localStorage.getItem(SNOOZE_KEY) || '0');
+    if (Date.now() < snoozeUntil) return false;
+    return true;
+  }
+
+  function showBanner() {
+    if (!shouldShow()) return;
+    var msg = MESSAGES[Math.floor(Math.random() * MESSAGES.length)];
+    var title = document.getElementById('reminderTitle');
+    var sub = document.getElementById('reminderSub');
+    if (title) title.textContent = msg.title;
+    if (sub) sub.textContent = msg.sub;
+    var banner = document.getElementById('reminderBanner');
+    if (banner) {
+      setTimeout(function(){ banner.classList.add('show'); }, 800);
+      // Auto-dismiss after 8 seconds
+      setTimeout(function(){ banner.classList.remove('show'); }, 8800);
+    }
+  }
+
+  window.dismissReminder = function(goTrain) {
+    var banner = document.getElementById('reminderBanner');
+    if (banner) banner.classList.remove('show');
+    // Snooze for 2 hours
+    localStorage.setItem(SNOOZE_KEY, Date.now() + 2 * 60 * 60 * 1000);
+    if (goTrain && window.showTab) window.showTab('record');
+  };
+
+  // Re-hide banner when user completes a session
+  var _origSaveReminder = window.saveSummary;
+  window.saveSummary = function() {
+    if (_origSaveReminder) _origSaveReminder();
+    var banner = document.getElementById('reminderBanner');
+    if (banner) banner.classList.remove('show');
+  };
+
+  // Show on load
+  document.addEventListener('DOMContentLoaded', showBanner);
 })();
 
 // ── Feature #6: Shooting Zones Heat Map ──
