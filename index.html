@@ -57,6 +57,8 @@
         --text-1: #000000;
         --text-2: rgba(0,0,0,0.60);
         --text-3: rgba(0,0,0,0.55);
+        --brand:        #E85D20;
+        --brand-glow:   rgba(232,93,32,0.2);
     }
     [data-theme="light"] .nav-inner { background: rgba(255,255,255,0.88); border-top: 1px solid rgba(0,0,0,0.08); }
     [data-theme="light"] .nav-btn { color: rgba(0,0,0,0.45); }
@@ -2025,17 +2027,7 @@
   .streak-warning.visible { display: block; }
 
 
-  /* ── Feature #9: Light Mode Theme ── */
-  :root.light {
-    --bg: #F5F5F7;
-    --surface: #FFFFFF;
-    --surface2: #EBEBF0;
-    --text-1: #1A1A2E;
-    --text-2: #6E6E80;
-    --border: #DCDCE0;
-    --brand: #E85D20;
-    --brand-glow: rgba(232,93,32,0.2);
-  }
+
   html { transition: background-color 0.3s ease, color 0.3s ease; }
   body, .app-header, .nav-bar, .tab-pane, .card, .profile-sheet, .summary-sheet, .shot-counter-wrap, .streak-card, .goal-section, .zones-section { transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease; }
   /* Theme toggle button */
@@ -4808,7 +4800,7 @@ document.addEventListener('DOMContentLoaded', () => {
     var _origBuzzer = window.sfx.buzzer;
     window.sfx.buzzer = function() {
       // timerRemaining is in outer scope of Feature #14's IIFE — read from display
-      var disp = document.getElementById('timerDisplay');
+      var disp = document.getElementById('timerDigits');
       var rem = disp ? disp.textContent : '';
       // parse mm:ss
       var parts = rem.split(':');
@@ -5342,46 +5334,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('DOMContentLoaded', refreshStreakUI);
 })();
 
-
-// ── Feature #9: Dark/Light Mode Toggle ──
-(function() {
-  function applyTheme(theme) {
-    if (theme === 'light') {
-      document.documentElement.classList.add('light');
-      var btn = document.getElementById('themeToggle');
-      if (btn) btn.textContent = '☀️';
-    } else {
-      document.documentElement.classList.remove('light');
-      var btn = document.getElementById('themeToggle');
-      if (btn) btn.textContent = '🌙';
-    }
-    localStorage.setItem('hoopai_theme', theme);
-  }
-
-  window.toggleTheme = function() {
-    var current = localStorage.getItem('hoopai_theme') || 'dark';
-    var next = current === 'dark' ? 'light' : 'dark';
-    var btn = document.getElementById('themeToggle');
-    if (btn) {
-      btn.classList.remove('spinning');
-      void btn.offsetWidth;
-      btn.classList.add('spinning');
-      setTimeout(function() { btn.classList.remove('spinning'); }, 450);
-    }
-    applyTheme(next);
-  };
-
-  document.addEventListener('DOMContentLoaded', function() {
-    var saved = localStorage.getItem('hoopai_theme');
-    if (saved) {
-      applyTheme(saved);
-    } else {
-      // Respect system preference
-      var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      applyTheme(prefersDark ? 'dark' : 'light');
-    }
-  });
-})();
 
 
 // ── Feature #10: Sound Effects (Web Audio API) ──
@@ -6945,12 +6897,14 @@ document.addEventListener('DOMContentLoaded', () => {
   window.recordMake = function() {
     if (_origRecordMakeSnd) _origRecordMakeSnd.apply(this, arguments);
     playSound('make');
+    if (window.refreshHeatmap) window.refreshHeatmap();
   };
 
   var _origRecordMissSnd = window.recordMiss;
   window.recordMiss = function() {
     if (_origRecordMissSnd) _origRecordMissSnd.apply(this, arguments);
     playSound('miss');
+    if (window.refreshHeatmap) window.refreshHeatmap();
   };
 
   renderPacks();
