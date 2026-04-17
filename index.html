@@ -1630,6 +1630,29 @@
   .workout-start-btn { width: 100%; margin-top: 12px; padding: 11px; border: none; border-radius: 10px; background: var(--brand); color: #fff; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: transform 0.15s var(--spring); }
   .workout-start-btn:active { transform: scale(0.97); }
 
+
+  /* ── Feature #34: Practice Reminders ── */
+  .reminders-section { margin: 24px 0; max-width: 100%; overflow: hidden; box-sizing: border-box; }
+  .reminders-section h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; color: var(--text-1); }
+  .reminder-form { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .reminder-form select, .reminder-form input[type="time"] { flex: 1; min-width: 100px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text-1); font-size: 0.85rem; }
+  .reminder-add-btn { padding: 10px 16px; border: none; border-radius: 10px; background: var(--brand); color: #fff; font-weight: 700; font-size: 0.85rem; cursor: pointer; white-space: nowrap; transition: transform 0.15s var(--spring); }
+  .reminder-add-btn:active { transform: scale(0.96); }
+  .reminder-list { display: flex; flex-direction: column; gap: 8px; }
+  .reminder-item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+  .reminder-item-icon { font-size: 1.2rem; flex-shrink: 0; }
+  .reminder-item-info { flex: 1; min-width: 0; }
+  .reminder-item-day { font-size: 0.85rem; font-weight: 600; color: var(--text-1); }
+  .reminder-item-time { font-size: 0.75rem; color: var(--text-2); }
+  .reminder-item-toggle { width: 44px; height: 24px; border-radius: 12px; border: none; background: var(--surface3); position: relative; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
+  .reminder-item-toggle.on { background: #34c759; }
+  .reminder-item-toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform 0.2s var(--spring); }
+  .reminder-item-toggle.on::after { transform: translateX(20px); }
+  .reminder-item-del { background: none; border: none; color: var(--text-3); font-size: 1.1rem; cursor: pointer; padding: 4px; flex-shrink: 0; }
+  .reminder-empty { font-size: 0.8rem; color: var(--text-3); text-align: center; padding: 20px 0; }
+  .reminder-notif { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--brand); color: #fff; padding: 12px 24px; border-radius: 12px; font-size: 0.9rem; font-weight: 600; z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+  .reminder-notif.show { opacity: 1; }
+
   /* ── Feature #15: Personal Records & Milestones ── */
   .pr-section { margin: 24px 0; max-width: 100%; overflow: hidden; }
   .pr-section-title { font-size: 16px; font-weight: 700; color: var(--text-1); margin-bottom: 4px; }
@@ -2916,6 +2939,30 @@
           <h3>📋 Workout Plans</h3>
           <div id="workoutPlansList"></div>
         </div>
+
+
+        <!-- Feature #34: Practice Reminders -->
+        <div class="reminders-section">
+          <h3>⏰ Practice Reminders</h3>
+          <div class="reminder-form">
+            <select id="reminderDay">
+              <option value="daily">Every Day</option>
+              <option value="weekdays">Weekdays</option>
+              <option value="weekends">Weekends</option>
+              <option value="0">Sunday</option>
+              <option value="1">Monday</option>
+              <option value="2">Tuesday</option>
+              <option value="3">Wednesday</option>
+              <option value="4">Thursday</option>
+              <option value="5">Friday</option>
+              <option value="6">Saturday</option>
+            </select>
+            <input type="time" id="reminderTime" value="17:00">
+            <button class="reminder-add-btn" onclick="window.addReminder()">+ Add</button>
+          </div>
+          <div class="reminder-list" id="reminderList"></div>
+        </div>
+        <div class="reminder-notif" id="reminderNotif">🏀 Time to practice!</div>
 
         <div class="zones-section">
           <div class="heatmap-toggle-row">
@@ -6058,6 +6105,134 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('visibilitychange', function() {
     if (!document.hidden) renderPlans();
   });
+})();
+
+
+// ── Feature #34: Practice Reminders ──
+(function() {
+  var STORE_KEY = 'hoopai_reminders';
+  var DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+  function getReminders() {
+    try { return JSON.parse(localStorage.getItem(STORE_KEY) || '[]'); } catch(e) { return []; }
+  }
+
+  function saveReminders(r) {
+    localStorage.setItem(STORE_KEY, JSON.stringify(r));
+  }
+
+  function formatDay(d) {
+    if (d === 'daily') return 'Every Day';
+    if (d === 'weekdays') return 'Weekdays';
+    if (d === 'weekends') return 'Weekends';
+    return DAY_NAMES[parseInt(d)] || d;
+  }
+
+  function formatTime(t) {
+    var parts = t.split(':');
+    var h = parseInt(parts[0]);
+    var m = parts[1];
+    var ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    return h + ':' + m + ' ' + ampm;
+  }
+
+  function renderReminders() {
+    var list = document.getElementById('reminderList');
+    if (!list) return;
+    var reminders = getReminders();
+    if (reminders.length === 0) {
+      list.innerHTML = '<div class="reminder-empty">No reminders set. Add one above!</div>';
+      return;
+    }
+    var h = '';
+    for (var i = 0; i < reminders.length; i++) {
+      var r = reminders[i];
+      var onClass = r.enabled ? ' on' : '';
+      h += '<div class="reminder-item">' +
+        '<div class="reminder-item-icon">🏀</div>' +
+        '<div class="reminder-item-info">' +
+          '<div class="reminder-item-day">' + formatDay(r.day) + '</div>' +
+          '<div class="reminder-item-time">' + formatTime(r.time) + '</div>' +
+        '</div>' +
+        '<button class="reminder-item-toggle' + onClass + '" onclick="event.stopPropagation(); window.toggleReminder(' + i + ')"></button>' +
+        '<button class="reminder-item-del" onclick="window.deleteReminder(' + i + ')">✕</button>' +
+        '</div>';
+    }
+    list.innerHTML = h;
+  }
+
+  window.addReminder = function() {
+    var dayEl = document.getElementById('reminderDay');
+    var timeEl = document.getElementById('reminderTime');
+    if (!dayEl || !timeEl) return;
+    var reminders = getReminders();
+    reminders.push({ day: dayEl.value, time: timeEl.value, enabled: true });
+    saveReminders(reminders);
+    renderReminders();
+  };
+
+  window.toggleReminder = function(idx) {
+    var reminders = getReminders();
+    if (reminders[idx]) {
+      reminders[idx].enabled = !reminders[idx].enabled;
+      saveReminders(reminders);
+      renderReminders();
+    }
+  };
+
+  window.deleteReminder = function(idx) {
+    var reminders = getReminders();
+    reminders.splice(idx, 1);
+    saveReminders(reminders);
+    renderReminders();
+  };
+
+  function showNotification(msg) {
+    var el = document.getElementById('reminderNotif');
+    if (!el) return;
+    el.textContent = msg || '🏀 Time to practice!';
+    el.classList.add('show');
+    setTimeout(function() { el.classList.remove('show'); }, 5000);
+    // Also try browser notification
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('HoopAI', { body: msg || 'Time to practice! 🏀', icon: '🏀' });
+    }
+  }
+
+  // Check reminders every 30 seconds
+  function checkReminders() {
+    var reminders = getReminders();
+    var now = new Date();
+    var day = now.getDay();
+    var hhmm = ('0' + now.getHours()).slice(-2) + ':' + ('0' + now.getMinutes()).slice(-2);
+    for (var i = 0; i < reminders.length; i++) {
+      var r = reminders[i];
+      if (!r.enabled) continue;
+      if (r.time !== hhmm) continue;
+      var match = false;
+      if (r.day === 'daily') match = true;
+      else if (r.day === 'weekdays' && day >= 1 && day <= 5) match = true;
+      else if (r.day === 'weekends' && (day === 0 || day === 6)) match = true;
+      else if (parseInt(r.day) === day) match = true;
+      if (match && !r._fired) {
+        showNotification('🏀 Time to practice! (' + formatDay(r.day) + ' ' + formatTime(r.time) + ')');
+        r._fired = hhmm;
+      }
+    }
+  }
+
+  setInterval(checkReminders, 30000);
+
+  // Request notification permission on first interaction
+  document.addEventListener('click', function reqPerm() {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+    document.removeEventListener('click', reqPerm);
+  }, { once: true });
+
+  renderReminders();
 })();
 
 </script>
