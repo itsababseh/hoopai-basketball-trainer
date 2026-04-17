@@ -293,16 +293,18 @@
 
     /* ─── RECORD SCREEN ──────────────────────────────────────── */
     .camera-shell {
-        background: var(--surface);
+        background: #000;
         border: 1px solid var(--border);
         border-radius: var(--radius-xl);
         overflow: hidden;
-        aspect-ratio: 9/16;
-        max-height: 340px;
+        aspect-ratio: 3/4;
+        max-height: 420px;
+        width: 100%;
         position: relative;
         display: flex;
         align-items: center;
         justify-content: center;
+        cursor: pointer;
     }
     #videoEl {
         width: 100%;
@@ -314,11 +316,19 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 12px;
-        color: var(--text-3);
+        gap: 16px;
+        color: #fff;
+        text-align: center;
+        padding: 24px;
+        position: absolute;
+        inset: 0;
+        justify-content: center;
+        background: rgba(0,0,0,0.85);
+        z-index: 2;
     }
-    .camera-empty-icon { font-size: 48px; opacity: 0.4; }
-    .camera-empty-text { font-size: 14px; font-weight: 500; }
+    .camera-empty-icon { font-size: 56px; }
+    .camera-empty-text { font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.8); }
+    .camera-empty-btn { background: var(--brand); color: #fff; border: none; border-radius: 24px; padding: 12px 28px; font-size: 15px; font-weight: 800; cursor: pointer; margin-top: 4px; }
 
     .camera-overlay {
         position: absolute;
@@ -948,7 +958,7 @@
         .app { max-width: 520px; }
         .hero-title { font-size: 40px; }
         .metrics-grid { grid-template-columns: repeat(4, 1fr); }
-        .camera-shell { max-height: 420px; }
+        .camera-shell { max-height: 380px; aspect-ratio: 3/4; }
     }
 
     /* ─── UTILS ──────────────────────────────────────────────── */
@@ -1447,7 +1457,8 @@
   .onboard-skip-btn { background: transparent; border: none; color: var(--text-2); font-size: 12px; cursor: pointer; padding: 4px 8px; }
   .onboard-next-btn { background: var(--brand); color: #fff; border: none; border-radius: 10px; padding: 7px 16px; font-size: 13px; font-weight: 700; cursor: pointer; transition: transform 0.15s var(--spring); }
   .onboard-next-btn:active { transform: scale(0.93); }
-  .onboard-highlight { position: absolute; border-radius: 12px; box-shadow: 0 0 0 4px var(--brand), 0 0 0 9999px rgba(0,0,0,0.6); pointer-events: none; transition: all 0.4s var(--spring); z-index: 601; }
+  .onboard-highlight { position: absolute; border-radius: 12px; box-shadow: 0 0 0 4px var(--brand), 0 0 0 9999px rgba(0,0,0,0.6); pointer-events: none; transition: all 0.4s var(--spring); z-index: 601; display: none; }
+  .onboard-overlay.active .onboard-highlight { display: block; }
 
 
   /* ── Feature #20: PWA Install Banner ── */
@@ -1813,9 +1824,10 @@
 
             <div class="camera-shell">
                 <video id="videoEl" autoplay muted playsinline></video>
-                <div id="cameraEmpty" class="camera-empty">
+                <div id="cameraEmpty" class="camera-empty" onclick="startCamera()">
                     <div class="camera-empty-icon">📷</div>
                     <div class="camera-empty-text">Tap to activate camera</div>
+                    <button class="camera-empty-btn" onclick="startCamera()">Enable Camera</button>
                 </div>
                 <div class="camera-overlay" id="cameraOverlay">
                     <div class="reticle"></div>
