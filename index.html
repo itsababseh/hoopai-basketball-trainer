@@ -1653,6 +1653,25 @@
   .reminder-notif { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--brand); color: #fff; padding: 12px 24px; border-radius: 12px; font-size: 0.9rem; font-weight: 600; z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
   .reminder-notif.show { opacity: 1; }
 
+
+  /* ── Feature #35: Player Profiles ── */
+  .player-profile-section { margin: 24px 0; max-width: 100%; overflow: hidden; box-sizing: border-box; }
+  .player-profile-section h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; color: var(--text-1); }
+  .player-profile-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; text-align: center; position: relative; overflow: hidden; }
+  .player-profile-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 60px; background: linear-gradient(135deg, var(--brand), #ff8f65); opacity: 0.15; }
+  .player-avatar { width: 72px; height: 72px; border-radius: 50%; background: var(--brand); color: #fff; font-size: 1.8rem; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; position: relative; z-index: 1; border: 3px solid var(--surface); }
+  .player-name-display { font-size: 1.15rem; font-weight: 700; color: var(--text-1); margin-bottom: 2px; }
+  .player-position-display { font-size: 0.8rem; color: var(--text-2); margin-bottom: 14px; }
+  .player-profile-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+  .player-profile-stat { background: var(--surface2); border-radius: 10px; padding: 10px 6px; }
+  .player-profile-stat-val { font-size: 1.2rem; font-weight: 800; color: var(--brand); }
+  .player-profile-stat-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-3); }
+  .player-profile-form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+  .player-profile-form input, .player-profile-form select { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text-1); font-size: 0.85rem; }
+  .player-profile-form input.full-width { grid-column: 1 / -1; }
+  .player-profile-save { grid-column: 1 / -1; padding: 11px; border: none; border-radius: 10px; background: var(--brand); color: #fff; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: transform 0.15s var(--spring); }
+  .player-profile-save:active { transform: scale(0.97); }
+
   /* ── Feature #15: Personal Records & Milestones ── */
   .pr-section { margin: 24px 0; max-width: 100%; overflow: hidden; }
   .pr-section-title { font-size: 16px; font-weight: 700; color: var(--text-1); margin-bottom: 4px; }
@@ -2963,6 +2982,35 @@
           <div class="reminder-list" id="reminderList"></div>
         </div>
         <div class="reminder-notif" id="reminderNotif">🏀 Time to practice!</div>
+
+
+        <!-- Feature #35: Player Profiles -->
+        <div class="player-profile-section">
+          <h3>👤 Player Profile</h3>
+          <div class="player-profile-card">
+            <div class="player-avatar" id="playerAvatar">?</div>
+            <div class="player-name-display" id="playerNameDisplay">Set Up Your Profile</div>
+            <div class="player-position-display" id="playerPositionDisplay">Tap save to get started</div>
+            <div class="player-profile-stats">
+              <div class="player-profile-stat"><div class="player-profile-stat-val" id="ppTotalSessions">0</div><div class="player-profile-stat-label">Sessions</div></div>
+              <div class="player-profile-stat"><div class="player-profile-stat-val" id="ppTotalMakes">0</div><div class="player-profile-stat-label">Total Makes</div></div>
+              <div class="player-profile-stat"><div class="player-profile-stat-val" id="ppAvgAcc">0%</div><div class="player-profile-stat-label">Avg Accuracy</div></div>
+            </div>
+            <div class="player-profile-form">
+              <input type="text" id="ppName" placeholder="Your Name" class="full-width" maxlength="30">
+              <select id="ppPosition">
+                <option value="">Position</option>
+                <option value="PG">Point Guard</option>
+                <option value="SG">Shooting Guard</option>
+                <option value="SF">Small Forward</option>
+                <option value="PF">Power Forward</option>
+                <option value="C">Center</option>
+              </select>
+              <input type="text" id="ppJersey" placeholder="#" maxlength="3">
+              <button class="player-profile-save" onclick="window.savePlayerProfile()">💾 Save Profile</button>
+            </div>
+          </div>
+        </div>
 
         <div class="zones-section">
           <div class="heatmap-toggle-row">
@@ -6233,6 +6281,92 @@ document.addEventListener('DOMContentLoaded', () => {
   }, { once: true });
 
   renderReminders();
+})();
+
+
+// ── Feature #35: Player Profiles ──
+(function() {
+  var STORE_KEY = 'hoopai_player_profile';
+
+  function getProfile() {
+    try { return JSON.parse(localStorage.getItem(STORE_KEY) || '{}'); } catch(e) { return {}; }
+  }
+
+  function getInitials(name) {
+    if (!name) return '?';
+    var parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return name.substring(0, 2).toUpperCase();
+  }
+
+  function getCareerStats() {
+    var sessions = 0, totalMakes = 0, totalShots = 0;
+    try {
+      var hist = JSON.parse(localStorage.getItem('hoopai_session_history') || '[]');
+      sessions = hist.length;
+      for (var i = 0; i < hist.length; i++) {
+        totalMakes += hist[i].makes || 0;
+        totalShots += (hist[i].makes || 0) + (hist[i].misses || 0);
+      }
+    } catch(e) {}
+    var avgAcc = totalShots > 0 ? Math.round((totalMakes / totalShots) * 100) : 0;
+    return { sessions: sessions, makes: totalMakes, avgAcc: avgAcc };
+  }
+
+  function renderProfile() {
+    var profile = getProfile();
+    var avatarEl = document.getElementById('playerAvatar');
+    var nameEl = document.getElementById('playerNameDisplay');
+    var posEl = document.getElementById('playerPositionDisplay');
+    var nameInput = document.getElementById('ppName');
+    var posInput = document.getElementById('ppPosition');
+    var jerseyInput = document.getElementById('ppJersey');
+    var sessEl = document.getElementById('ppTotalSessions');
+    var makesEl = document.getElementById('ppTotalMakes');
+    var accEl = document.getElementById('ppAvgAcc');
+
+    if (!avatarEl) return;
+
+    if (profile.name) {
+      avatarEl.textContent = getInitials(profile.name);
+      nameEl.textContent = profile.name + (profile.jersey ? ' #' + profile.jersey : '');
+      var posNames = { PG: 'Point Guard', SG: 'Shooting Guard', SF: 'Small Forward', PF: 'Power Forward', C: 'Center' };
+      posEl.textContent = posNames[profile.position] || 'Basketball Player';
+    } else {
+      avatarEl.textContent = '?';
+      nameEl.textContent = 'Set Up Your Profile';
+      posEl.textContent = 'Tap save to get started';
+    }
+
+    if (nameInput) nameInput.value = profile.name || '';
+    if (posInput) posInput.value = profile.position || '';
+    if (jerseyInput) jerseyInput.value = profile.jersey || '';
+
+    var stats = getCareerStats();
+    if (sessEl) sessEl.textContent = stats.sessions;
+    if (makesEl) makesEl.textContent = stats.makes;
+    if (accEl) accEl.textContent = stats.avgAcc + '%';
+  }
+
+  window.savePlayerProfile = function() {
+    var name = (document.getElementById('ppName') || {}).value || '';
+    var position = (document.getElementById('ppPosition') || {}).value || '';
+    var jersey = (document.getElementById('ppJersey') || {}).value || '';
+    localStorage.setItem(STORE_KEY, JSON.stringify({ name: name.trim(), position: position, jersey: jersey.trim() }));
+    renderProfile();
+  };
+
+  // Hook saveSummary to refresh stats
+  var _origSaveSummaryProfile = window.saveSummary;
+  window.saveSummary = function() {
+    if (_origSaveSummaryProfile) _origSaveSummaryProfile.apply(this, arguments);
+    setTimeout(renderProfile, 150);
+  };
+
+  renderProfile();
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) renderProfile();
+  });
 })();
 
 </script>
