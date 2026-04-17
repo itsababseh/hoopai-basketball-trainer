@@ -5410,8 +5410,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (muted) playSwish(); // preview sound on unmute
   };
 
-  // Expose for other features
-  window.sfx = { swish: playSwish, buzzer: playBuzzer, cheer: playCheer };
+  // Expose for other features — patch existing sfx, preserve enhanced buzzer/cheer
+  if (!window.sfx) window.sfx = {};
+  window.sfx.swish = playSwish;
+  window.sfx.buzzer = window.sfx.buzzer || playBuzzer;
+  window.sfx.cheer = window.sfx.cheer || playCheer;
 
   // Hook into make/miss buttons (sound removed — Feature #38 handles sounds)
   var _origMake = window.recordMake;
@@ -5544,7 +5547,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
+  var _origStartDrillLib = window.startDrill;
   window.startDrill = function(name) {
+    if (_origStartDrillLib) _origStartDrillLib(name);
     var st = document.getElementById('statusText');
     if (st) st.textContent = '▶ Drill started: ' + name + ' — switch to Record tab to track shots!';
     // Store active drill name for timer feature
@@ -5830,6 +5835,33 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('visibilitychange', function() {
         if (!document.hidden) renderWG();
     });
+
+    // ── Weekly goal accumulators: write totals on session save ──
+    var _origSaveWGAccum = window.saveSummary;
+    window.saveSummary = function() {
+        if (_origSaveWGAccum) _origSaveWGAccum();
+        try {
+            var hist = JSON.parse(localStorage.getItem('hoopai_session_history') || '[]');
+            var totalMakes = 0, totalAttempts = 0;
+            hist.forEach(function(s) {
+                var m = s.makes || 0;
+                var miss = s.misses || 0;
+                totalMakes += m;
+                totalAttempts += m + miss;
+            });
+            safeSetItem('hoopai_total_makes', totalMakes);
+            safeSetItem('hoopai_total_attempts', totalAttempts);
+            safeSetItem('hoopai_total_sessions', hist.length);
+        } catch(e) {}
+    };
+
+    // Increment drills_done counter when a drill starts
+    var _origStartDrillWG = window.startDrill;
+    window.startDrill = function(name) {
+        if (_origStartDrillWG) _origStartDrillWG(name);
+        var done = parseInt(localStorage.getItem('hoopai_drills_done') || '0');
+        safeSetItem('hoopai_drills_done', done + 1);
+    };
 })();
 
 
@@ -6635,13 +6667,13 @@ document.addEventListener('DOMContentLoaded', () => {
   var _origRecordMakeZT = window.recordMake;
   window.recordMake = function(zone) {
     if (_origRecordMakeZT) _origRecordMakeZT.apply(this, arguments);
-    if (zone) window.recordZoneShot(zone, true);
+    if (zone && typeof zone === 'string') window.recordZoneShot(zone, true);
   };
 
   var _origRecordMissZT = window.recordMiss;
   window.recordMiss = function(zone) {
     if (_origRecordMissZT) _origRecordMissZT.apply(this, arguments);
-    if (zone) window.recordZoneShot(zone, false);
+    if (zone && typeof zone === 'string') window.recordZoneShot(zone, false);
   };
 
   renderTabs();
