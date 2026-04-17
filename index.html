@@ -1772,7 +1772,37 @@
   .backup-status.error { background: rgba(255,59,48,0.1); color: #ff3b30; }
   #backupFileInput { display: none; }
 
-  /* ── Feature #15: Personal Records & Milestones ── */
+  /* ── Feature #39: Data Backup & Restore ── */
+.backup-section { margin-top: 18px; }
+.backup-card {
+  background: var(--surface); border-radius: 14px; padding: 18px;
+  margin-bottom: 14px; border: 1.5px solid rgba(255,107,53,.10);
+}
+.backup-card h3 { font-size: 1.05rem; margin: 0 0 6px; color: var(--text-1); }
+.backup-card p { font-size: .85rem; color: var(--text-3); margin: 0 0 12px; }
+.backup-info-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.backup-info-chip {
+  background: rgba(255,107,53,.10); color: var(--brand); font-size: .75rem;
+  padding: 4px 10px; border-radius: 20px; font-weight: 600;
+}
+.backup-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.backup-export-btn, .backup-import-btn, .backup-danger-btn {
+  padding: 10px 20px; border: none; border-radius: 10px; font-size: .9rem;
+  font-weight: 700; cursor: pointer; transition: transform .15s var(--spring), opacity .15s;
+}
+.backup-export-btn { background: var(--brand); color: #fff; }
+.backup-import-btn { background: rgba(255,107,53,.12); color: var(--brand); }
+.backup-danger-btn { background: rgba(220,38,38,.12); color: #dc2626; }
+.backup-export-btn:active, .backup-import-btn:active, .backup-danger-btn:active { transform: scale(.96); }
+.backup-status {
+  position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+  padding: 10px 22px; border-radius: 10px; font-size: .85rem; font-weight: 600;
+  z-index: 9999; opacity: 0; transition: opacity .3s; pointer-events: none;
+}
+.backup-status.success { background: #22c55e; color: #fff; opacity: 1; }
+.backup-status.error { background: #dc2626; color: #fff; opacity: 1; }
+
+/* ── Feature #15: Personal Records & Milestones ── */
   .pr-section { margin: 24px 0; max-width: 100%; overflow: hidden; }
   .pr-section-title { font-size: 16px; font-weight: 700; color: var(--text-1); margin-bottom: 4px; }
   .pr-section-sub { font-size: 12px; color: var(--text-2); margin-bottom: 14px; }
@@ -3197,7 +3227,34 @@
           <div class="backup-status" id="backupStatus"></div>
         </div>
 
-        <div class="zones-section">
+        <div class="backup-section">
+        <div class="backup-card">
+          <h3>📦 Export Backup</h3>
+          <p>Download all your HoopAI data as a JSON file.</p>
+          <div class="backup-info-chips" id="backupInfoChips"></div>
+          <div class="backup-actions">
+            <button class="backup-export-btn" onclick="exportBackup()">⬇ Download Backup</button>
+          </div>
+        </div>
+        <div class="backup-card">
+          <h3>📥 Import Backup</h3>
+          <p>Restore your data from a previously exported backup file.</p>
+          <div class="backup-actions">
+            <input type="file" id="backupFileInput" accept=".json" style="display:none" onchange="importBackup(event)">
+            <button class="backup-import-btn" onclick="document.getElementById('backupFileInput').click()">⬆ Choose Backup File</button>
+          </div>
+        </div>
+        <div class="backup-card">
+          <h3>🗑️ Clear All Data</h3>
+          <p>Permanently delete all HoopAI data from this device. This cannot be undone.</p>
+          <div class="backup-actions">
+            <button class="backup-danger-btn" onclick="clearAllData()">🗑️ Clear Everything</button>
+          </div>
+        </div>
+      </div>
+      <div id="backupStatus" class="backup-status"></div>
+
+      <div class="zones-section">
           <div class="heatmap-toggle-row">
             <span style="font-size:13px;font-weight:700;color:var(--text-1)">🗺️ Zone Heatmap</span>
             <button class="heatmap-toggle-btn" id="heatmapToggleBtn" onclick="toggleHeatmap()">Show Heatmap</button>
@@ -7059,6 +7116,109 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   updateInfo();
+})();
+
+// ── Feature #39: Data Backup & Restore ──
+(function() {
+  var HOOPAI_KEYS = [
+    'hoopai_makes', 'hoopai_misses', 'hoopai_history', 'hoopai_timer_seconds',
+    'hoopai_goals', 'hoopai_zone_stats', 'hoopai_personal_records',
+    'hoopai_session_history', 'hoopai_player_profile', 'hoopai_zone_history',
+    'hoopai_video_bookmarks', 'hoopai_sound_settings', 'hoopai_reminders',
+    'hoopai_workout_progress', 'hoopai_theme', 'hoopai_drill_stats',
+    'hoopai_achievements'
+  ];
+
+  function showBackupStatus(msg, type) {
+    var el = document.getElementById('backupStatus');
+    if (!el) return;
+    el.textContent = msg;
+    el.className = 'backup-status ' + type;
+    setTimeout(function() { el.className = 'backup-status'; }, 3000);
+  }
+
+  function updateBackupInfo() {
+    var container = document.getElementById('backupInfoChips');
+    if (!container) return;
+    var count = 0; var totalSize = 0;
+    HOOPAI_KEYS.forEach(function(key) {
+      var val = localStorage.getItem(key);
+      if (val) { count++; totalSize += val.length * 2; }
+    });
+    var sizeStr = totalSize < 1024 ? totalSize + ' B' :
+                  totalSize < 1048576 ? (totalSize / 1024).toFixed(1) + ' KB' :
+                  (totalSize / 1048576).toFixed(1) + ' MB';
+    container.innerHTML =
+      '<span class="backup-info-chip">📊 ' + count + ' data keys</span>' +
+      '<span class="backup-info-chip">💾 ' + sizeStr + '</span>';
+  }
+
+  window.exportBackup = function() {
+    try {
+      var data = {};
+      HOOPAI_KEYS.forEach(function(key) {
+        var val = localStorage.getItem(key);
+        if (val !== null) data[key] = val;
+      });
+      data._hoopai_backup = true;
+      data._exported_at = new Date().toISOString();
+      data._version = '1.0';
+      var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'hoopai-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showBackupStatus('✅ Backup downloaded!', 'success');
+    } catch (e) {
+      showBackupStatus('❌ Export failed: ' + e.message, 'error');
+    }
+  };
+
+  window.importBackup = function(event) {
+    var file = event.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        var data = JSON.parse(e.target.result);
+        if (!data._hoopai_backup) {
+          showBackupStatus('❌ Not a valid HoopAI backup file', 'error');
+          return;
+        }
+        if (!confirm('This will overwrite your current data with the backup. Continue?')) return;
+        var restored = 0;
+        HOOPAI_KEYS.forEach(function(key) {
+          if (data[key] !== undefined) {
+            localStorage.setItem(key, data[key]);
+            restored++;
+          }
+        });
+        showBackupStatus('✅ Restored ' + restored + ' data keys!', 'success');
+        updateBackupInfo();
+        setTimeout(function() { location.reload(); }, 1500);
+      } catch (err) {
+        showBackupStatus('❌ Invalid backup file: ' + err.message, 'error');
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  };
+
+  window.clearAllData = function() {
+    if (!confirm('⚠️ Delete ALL HoopAI data? This cannot be undone!')) return;
+    if (!confirm('Are you absolutely sure? All sessions, stats, and settings will be lost.')) return;
+    HOOPAI_KEYS.forEach(function(key) { localStorage.removeItem(key); });
+    showBackupStatus('🗑️ All data cleared!', 'success');
+    updateBackupInfo();
+    setTimeout(function() { location.reload(); }, 1500);
+  };
+
+  updateBackupInfo();
+
 })();
 
 </script>
