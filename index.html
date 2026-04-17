@@ -1389,6 +1389,22 @@
   .sound-toggle { background: var(--surface2); border: 1.5px solid var(--border); border-radius: 30px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; transition: transform 0.2s var(--spring), background 0.3s; flex-shrink: 0; }
   .sound-toggle:active { transform: scale(0.88); }
 
+
+  /* ── Feature #11: AI Coach Tip Engine ── */
+  .coach-card { background: var(--surface); border-radius: var(--radius); padding: 16px; margin: 16px 0; border-left: 4px solid var(--brand); position: relative; overflow: hidden; }
+  .coach-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: linear-gradient(180deg, #FF6B35, #FFB347); }
+  .coach-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .coach-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--brand), #FFB347); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .coach-name { font-size: 13px; font-weight: 700; color: var(--brand); text-transform: uppercase; letter-spacing: 0.5px; }
+  .coach-label { font-size: 11px; color: var(--text-2); }
+  .coach-tip-text { font-size: 14px; color: var(--text-1); line-height: 1.5; font-weight: 500; }
+  .coach-tip-text.tip-animate { animation: slideInTip 0.35s var(--spring); }
+  @keyframes slideInTip { 0%{opacity:0;transform:translateX(12px)} 100%{opacity:1;transform:translateX(0)} }
+  .coach-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+  .coach-condition { font-size: 11px; color: var(--text-2); font-style: italic; }
+  .coach-next-btn { background: none; border: 1px solid var(--border); color: var(--brand); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .coach-next-btn:hover { background: var(--brand); color: #fff; border-color: var(--brand); }
+
 </style>
 </head>
 <body>
@@ -1593,6 +1609,23 @@
 
         <div class="shot-reset-row" id="resetRow">
             <button class="shot-reset-btn" onclick="resetCounter()">↺ Reset Session</button>
+          </div>
+        </div>
+
+        
+        <!-- Feature #11: AI Coach Tip -->
+        <div class="coach-card" id="coachCard">
+          <div class="coach-header">
+            <div class="coach-avatar">🏀</div>
+            <div>
+              <div class="coach-name">HoopAI Coach</div>
+              <div class="coach-label">Personalized insights</div>
+            </div>
+          </div>
+          <div class="coach-tip-text" id="coachTipText">Start your session and I'll analyze your shooting!</div>
+          <div class="coach-footer">
+            <span class="coach-condition" id="coachCondition"></span>
+            <button class="coach-next-btn" onclick="nextCoachTip()">💡 Next Tip</button>
           </div>
         </div>
 
@@ -3008,6 +3041,92 @@ document.addEventListener('DOMContentLoaded', () => {
     var btn = document.getElementById('soundToggle');
     if (btn) btn.textContent = muted ? '🔇' : '🔊';
   });
+})();
+
+
+// ── Feature #11: AI Coach Tip Engine ──
+(function() {
+  var tips = [
+    // Low make% tips
+    { condition: function(m,a,t) { return a>=5 && (m/a)<0.35; }, text: "Your make rate is below 35% — slow down and focus on your follow-through. Hold your shooting hand up until the ball hits the rim.", label: "Make rate < 35%" },
+    { condition: function(m,a,t) { return a>=5 && (m/a)<0.35; }, text: "When you're cold, shorten the distance. Move 2 feet closer and rebuild confidence before going back to your spot.", label: "Struggling session" },
+    // Good make% tips
+    { condition: function(m,a,t) { return a>=5 && (m/a)>=0.6; }, text: "You're shooting over 60%! 🔥 Now challenge yourself — take one step back on each made basket.", label: "Hot streak" },
+    { condition: function(m,a,t) { return a>=5 && (m/a)>=0.5; }, text: "Great make rate! Add a dribble pull-up before shooting to simulate game situations.", label: "50%+ make rate" },
+    // Shot type specific
+    { condition: function(m,a,t) { return t==='three'; }, text: "On 3-pointers: your arc needs to be at least 45°. Think 'up' not 'out'. Aim for the top of the backboard square.", label: "3-Pointer selected" },
+    { condition: function(m,a,t) { return t==='freethrow'; }, text: "Free throws are 100% routine. Same grip, same breath, same release every time. Repetition builds auto-pilot.", label: "Free Throw selected" },
+    { condition: function(m,a,t) { return t==='layup'; }, text: "On layups: attack the basket at an angle, use the backboard, and release off the finger pads — not your palm.", label: "Layup selected" },
+    { condition: function(m,a,t) { return t==='midrange'; }, text: "Mid-range kings win championships. Focus on a consistent landing spot — feet shoulder-width, land where you jumped.", label: "Mid-range selected" },
+    // Volume tips
+    { condition: function(m,a,t) { return a>=20; }, text: "20+ attempts — your legs might be getting tired. Check your base: bend your knees before every shot.", label: "High volume session" },
+    { condition: function(m,a,t) { return a>=10 && a<20; }, text: "Good volume! Mix up your spots — try 3 makes from each zone before moving on to build consistency.", label: "10+ attempts" },
+    // Early session
+    { condition: function(m,a,t) { return a<5; }, text: "Warm up with layups and free throws first. Your shot gets 15% more accurate after a proper warm-up.", label: "Early session" },
+    { condition: function(m,a,t) { return a===0; }, text: "Start close to the basket and work your way out. Build confidence before shooting deep.", label: "Session start" },
+    // Always-on tips
+    { condition: function() { return true; }, text: "Elite shooters take 500+ shots per week. Consistency over perfection — show up every day.", label: "Daily habit" },
+    { condition: function() { return true; }, text: "Visualization works: before each shot, picture it going in. Studies show mental reps count as practice.", label: "Mental game" },
+    { condition: function() { return true; }, text: "Film yourself shooting once a week. It takes 5 minutes and reveals problems you can't feel in the moment.", label: "Film study" },
+    { condition: function() { return true; }, text: "Shooting is 60% legs. If your shot is short, your legs gave out — not your arm.", label: "Mechanics" },
+    { condition: function() { return true; }, text: "The best free throw shooters use the same pre-shot routine every time. Build yours: bounce, breath, shoot.", label: "Routine" },
+    { condition: function() { return true; }, text: "Practice at game speed. Slow practice creates slow game decisions. Attack each shot with intention.", label: "Game speed" },
+    { condition: function() { return true; }, text: "Your shooting hand should be directly behind and under the ball. Your guide hand only steadies — it never pushes.", label: "Hand placement" },
+    { condition: function() { return true; }, text: "Aim for the back of the rim, not the front. Back-rim aim gives you more room for error and better bank-in chances.", label: "Aim point" }
+  ];
+
+  var shownTipIdx = -1;
+  var tipCycleIdx = 0;
+
+  function getRelevantTips() {
+    var m = window.sessionMakes || 0;
+    var a = window.sessionAttempts || 0;
+    var t = window.currentShotType || 'layup';
+    return tips.filter(function(tip) { return tip.condition(m, a, t); });
+  }
+
+  function showTip(tip) {
+    var el = document.getElementById('coachTipText');
+    var cond = document.getElementById('coachCondition');
+    if (!el) return;
+    el.classList.remove('tip-animate');
+    void el.offsetWidth;
+    el.classList.add('tip-animate');
+    el.textContent = tip.text;
+    if (cond) cond.textContent = tip.label;
+  }
+
+  function refreshCoachTip() {
+    var relevant = getRelevantTips();
+    if (!relevant.length) return;
+    tipCycleIdx = tipCycleIdx % relevant.length;
+    showTip(relevant[tipCycleIdx]);
+  }
+
+  window.nextCoachTip = function() {
+    var relevant = getRelevantTips();
+    if (!relevant.length) return;
+    tipCycleIdx = (tipCycleIdx + 1) % relevant.length;
+    showTip(relevant[tipCycleIdx]);
+  };
+
+  // Auto-refresh every 5 shots
+  var lastRefreshAt = 0;
+  var _origMake3 = window.recordMake;
+  window.recordMake = function(el) { if (_origMake3) _origMake3(el); checkAutoRefresh(); };
+  var _origMiss3 = window.recordMiss;
+  window.recordMiss = function(el) { if (_origMiss3) _origMiss3(el); checkAutoRefresh(); };
+
+  function checkAutoRefresh() {
+    var a = window.sessionAttempts || 0;
+    if (a - lastRefreshAt >= 5) { lastRefreshAt = a; tipCycleIdx = 0; refreshCoachTip(); }
+  }
+
+  // Refresh on shot type change
+  var _origSelectShot = window.selectShotType;
+  window.selectShotType = function(el, type) { if (_origSelectShot) _origSelectShot(el, type); tipCycleIdx = 0; refreshCoachTip(); };
+
+  document.addEventListener('DOMContentLoaded', refreshCoachTip);
 })();
 
 </script>
