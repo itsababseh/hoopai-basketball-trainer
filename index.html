@@ -1600,6 +1600,36 @@
   .share-card-copy { background: var(--surface2); color: var(--text-1); }
   #shareCanvas { display: none; }
 
+
+  /* ── Feature #33: Workout Plans ── */
+  .workout-plans-section { margin: 24px 0; max-width: 100%; overflow: hidden; box-sizing: border-box; }
+  .workout-plans-section h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; color: var(--text-1); }
+  .workout-plan-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 12px; cursor: pointer; transition: transform 0.15s var(--spring), border-color 0.2s; }
+  .workout-plan-card:active { transform: scale(0.98); }
+  .workout-plan-card.active-plan { border-color: var(--brand); }
+  .workout-plan-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .workout-plan-name { font-size: 1rem; font-weight: 700; color: var(--text-1); }
+  .workout-plan-badge { font-size: 0.65rem; padding: 3px 8px; border-radius: 20px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .workout-plan-badge.beginner { background: rgba(52,199,89,0.15); color: #34c759; }
+  .workout-plan-badge.intermediate { background: rgba(255,149,0,0.15); color: #ff9500; }
+  .workout-plan-badge.advanced { background: rgba(255,59,48,0.15); color: #ff3b30; }
+  .workout-plan-desc { font-size: 0.8rem; color: var(--text-2); margin-bottom: 10px; }
+  .workout-plan-drills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .workout-drill-chip { font-size: 0.7rem; padding: 4px 10px; background: var(--surface2); border-radius: 20px; color: var(--text-2); }
+  .workout-plan-expanded { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); display: none; }
+  .workout-plan-card.expanded .workout-plan-expanded { display: block; }
+  .workout-step { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .workout-step:last-child { border-bottom: none; }
+  .workout-step-num { width: 26px; height: 26px; border-radius: 50%; background: var(--brand); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; }
+  .workout-step-info { flex: 1; min-width: 0; }
+  .workout-step-name { font-size: 0.85rem; font-weight: 600; color: var(--text-1); }
+  .workout-step-detail { font-size: 0.7rem; color: var(--text-3); }
+  .workout-step-done { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: background 0.2s, border-color 0.2s; }
+  .workout-step-done.checked { background: #34c759; border-color: #34c759; }
+  .workout-step-done.checked::after { content: '✓'; color: #fff; font-size: 0.75rem; font-weight: 700; }
+  .workout-start-btn { width: 100%; margin-top: 12px; padding: 11px; border: none; border-radius: 10px; background: var(--brand); color: #fff; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: transform 0.15s var(--spring); }
+  .workout-start-btn:active { transform: scale(0.97); }
+
   /* ── Feature #15: Personal Records & Milestones ── */
   .pr-section { margin: 24px 0; max-width: 100%; overflow: hidden; }
   .pr-section-title { font-size: 16px; font-weight: 700; color: var(--text-1); margin-bottom: 4px; }
@@ -2878,6 +2908,13 @@
             <button class="share-card-copy" onclick="window.shareShareCard()">📤 Share</button>
           </div>
           <canvas id="shareCanvas" width="600" height="400"></canvas>
+        </div>
+
+
+        <!-- Feature #33: Workout Plans -->
+        <div class="workout-plans-section">
+          <h3>📋 Workout Plans</h3>
+          <div id="workoutPlansList"></div>
         </div>
 
         <div class="zones-section">
@@ -5890,6 +5927,136 @@ document.addEventListener('DOMContentLoaded', () => {
   updateShareCard();
   document.addEventListener('visibilitychange', function() {
     if (!document.hidden) updateShareCard();
+  });
+})();
+
+
+// ── Feature #33: Workout Plans ──
+(function() {
+  var PLANS = [
+    {
+      id: 'warmup-basics', name: '🔥 Warm-Up Basics', level: 'beginner',
+      desc: 'Quick 10-minute warm-up to get your shot going.',
+      drills: [
+        { name: 'Form Shooting', detail: '10 shots from 5ft', reps: 10 },
+        { name: 'Free Throws', detail: '10 free throws', reps: 10 },
+        { name: 'Elbow Jumpers', detail: '5 from each elbow', reps: 10 },
+        { name: 'Layup Lines', detail: '5 each side', reps: 10 }
+      ]
+    },
+    {
+      id: 'catch-and-shoot', name: '🎯 Catch & Shoot', level: 'intermediate',
+      desc: 'Simulate game-speed catch-and-shoot situations.',
+      drills: [
+        { name: 'Corner 3s (Left)', detail: '10 shots', reps: 10 },
+        { name: 'Corner 3s (Right)', detail: '10 shots', reps: 10 },
+        { name: 'Wing 3s (Left)', detail: '10 shots', reps: 10 },
+        { name: 'Wing 3s (Right)', detail: '10 shots', reps: 10 },
+        { name: 'Top of Key 3s', detail: '10 shots', reps: 10 }
+      ]
+    },
+    {
+      id: 'mid-range-master', name: '🏀 Mid-Range Master', level: 'intermediate',
+      desc: 'Develop a deadly mid-range game from all spots.',
+      drills: [
+        { name: 'Baseline Pull-Up', detail: '8 shots each side', reps: 16 },
+        { name: 'Free Throw Line Extended', detail: '10 shots', reps: 10 },
+        { name: 'Elbow Fadeaway', detail: '5 each elbow', reps: 10 },
+        { name: 'High Post Turnaround', detail: '10 shots', reps: 10 }
+      ]
+    },
+    {
+      id: 'full-court-grind', name: '💪 Full Court Grind', level: 'advanced',
+      desc: 'Intense 30-minute full workout covering all zones.',
+      drills: [
+        { name: 'Layups (both hands)', detail: '10 each hand', reps: 20 },
+        { name: 'Free Throws', detail: '15 shots', reps: 15 },
+        { name: 'Mid-Range Circuit', detail: '5 spots x 4 shots', reps: 20 },
+        { name: '3-Point Circuit', detail: '5 spots x 4 shots', reps: 20 },
+        { name: 'Pressure Free Throws', detail: '10 shots (must make 8)', reps: 10 },
+        { name: 'Game Winners', detail: '5 clutch shots', reps: 5 }
+      ]
+    }
+  ];
+
+  var progressKey = 'hoopai_workout_progress';
+
+  function getProgress() {
+    try { return JSON.parse(localStorage.getItem(progressKey) || '{}'); } catch(e) { return {}; }
+  }
+
+  function saveProgress(p) {
+    localStorage.setItem(progressKey, JSON.stringify(p));
+  }
+
+  function renderPlans() {
+    var container = document.getElementById('workoutPlansList');
+    if (!container) return;
+    var progress = getProgress();
+    var h = '';
+    for (var i = 0; i < PLANS.length; i++) {
+      var p = PLANS[i];
+      var pp = progress[p.id] || {};
+      var doneCount = 0;
+      for (var j = 0; j < p.drills.length; j++) {
+        if (pp['d' + j]) doneCount++;
+      }
+      var allDone = doneCount === p.drills.length;
+      var chips = '';
+      for (var k = 0; k < p.drills.length; k++) {
+        chips += '<span class="workout-drill-chip">' + p.drills[k].name + '</span>';
+      }
+      var steps = '';
+      for (var s = 0; s < p.drills.length; s++) {
+        var checked = pp['d' + s] ? ' checked' : '';
+        steps += '<div class="workout-step">' +
+          '<div class="workout-step-num">' + (s + 1) + '</div>' +
+          '<div class="workout-step-info"><div class="workout-step-name">' + p.drills[s].name + '</div>' +
+          '<div class="workout-step-detail">' + p.drills[s].detail + ' (' + p.drills[s].reps + ' reps)</div></div>' +
+          '<div class="workout-step-done' + checked + '" data-plan="' + p.id + '" data-drill="' + s + '" onclick="window.toggleWorkoutDrill(this)"></div>' +
+          '</div>';
+      }
+      h += '<div class="workout-plan-card" data-plan-id="' + p.id + '" onclick="window.togglePlanExpand(this)">' +
+        '<div class="workout-plan-header"><span class="workout-plan-name">' + p.name + (allDone ? ' ✅' : '') + '</span>' +
+        '<span class="workout-plan-badge ' + p.level + '">' + p.level + '</span></div>' +
+        '<div class="workout-plan-desc">' + p.desc + '</div>' +
+        '<div class="workout-plan-drills">' + chips + '</div>' +
+        '<div class="workout-plan-expanded" onclick="event.stopPropagation()">' + steps +
+        '<button class="workout-start-btn" onclick="event.stopPropagation(); window.resetWorkoutPlan(\'' + p.id + '\')">🔄 Reset Plan</button>' +
+        '</div></div>';
+    }
+    container.innerHTML = h;
+  }
+
+  window.togglePlanExpand = function(card) {
+    var wasExpanded = card.classList.contains('expanded');
+    var all = document.querySelectorAll('.workout-plan-card');
+    for (var i = 0; i < all.length; i++) all[i].classList.remove('expanded');
+    if (!wasExpanded) card.classList.add('expanded');
+  };
+
+  window.toggleWorkoutDrill = function(el) {
+    el.classList.toggle('checked');
+    var planId = el.getAttribute('data-plan');
+    var drillIdx = el.getAttribute('data-drill');
+    var progress = getProgress();
+    if (!progress[planId]) progress[planId] = {};
+    progress[planId]['d' + drillIdx] = el.classList.contains('checked');
+    saveProgress(progress);
+    // Re-render to update completion badge
+    setTimeout(renderPlans, 50);
+  };
+
+  window.resetWorkoutPlan = function(planId) {
+    var progress = getProgress();
+    delete progress[planId];
+    saveProgress(progress);
+    renderPlans();
+  };
+
+  renderPlans();
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) renderPlans();
   });
 })();
 
