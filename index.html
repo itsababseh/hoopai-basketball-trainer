@@ -1577,6 +1577,29 @@
   .accuracy-trend-stat-val { font-size: 18px; font-weight: 800; color: var(--brand); }
   .accuracy-trend-stat-lbl { font-size: 11px; color: var(--text-3); margin-top: 2px; }
 
+
+  /* ── Feature #32: Social Share Cards ── */
+  .share-card-section { margin: 24px 0; max-width: 100%; overflow: hidden; }
+  .share-card-section h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; color: var(--text-1); }
+  .share-card-preview { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); border-radius: 16px; padding: 24px; position: relative; overflow: hidden; max-width: 100%; box-sizing: border-box; }
+  [data-theme="light"] .share-card-preview { background: linear-gradient(135deg, #FF6B35 0%, #ff8f65 50%, #ffa07a 100%); }
+  .share-card-preview::before { content: ''; position: absolute; top: -30px; right: -30px; width: 120px; height: 120px; background: rgba(255,107,53,0.15); border-radius: 50%; }
+  .share-card-preview::after { content: '🏀'; position: absolute; top: 12px; right: 16px; font-size: 2rem; opacity: 0.3; }
+  .share-card-brand { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; color: rgba(255,255,255,0.5); margin-bottom: 8px; }
+  .share-card-title { font-size: 1.4rem; font-weight: 800; color: #fff; margin-bottom: 4px; }
+  .share-card-date { font-size: 0.75rem; color: rgba(255,255,255,0.6); margin-bottom: 16px; }
+  .share-card-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+  .share-card-stat { text-align: center; }
+  .share-card-stat-val { font-size: 1.5rem; font-weight: 800; color: #fff; }
+  .share-card-stat-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.6); }
+  .share-card-footer { font-size: 0.65rem; color: rgba(255,255,255,0.4); text-align: center; }
+  .share-card-actions { display: flex; gap: 10px; margin-top: 14px; }
+  .share-card-actions button { flex: 1; padding: 10px; border: none; border-radius: 10px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: transform 0.15s var(--spring); }
+  .share-card-actions button:active { transform: scale(0.96); }
+  .share-card-dl { background: var(--brand); color: #fff; }
+  .share-card-copy { background: var(--surface2); color: var(--text-1); }
+  #shareCanvas { display: none; }
+
   /* ── Feature #15: Personal Records & Milestones ── */
   .pr-section { margin: 24px 0; max-width: 100%; overflow: hidden; }
   .pr-section-title { font-size: 16px; font-weight: 700; color: var(--text-1); margin-bottom: 4px; }
@@ -2833,6 +2856,28 @@
               </div>
             </div>
           </div>
+        </div>
+
+
+        <!-- Feature #32: Social Share Cards -->
+        <div class="share-card-section">
+          <h3>📤 Share Your Session</h3>
+          <div class="share-card-preview" id="shareCardPreview">
+            <div class="share-card-brand">HOOPAI BASKETBALL</div>
+            <div class="share-card-title" id="shareCardTitle">No Session Yet</div>
+            <div class="share-card-date" id="shareCardDate"></div>
+            <div class="share-card-stats">
+              <div class="share-card-stat"><div class="share-card-stat-val" id="shareStatMakes">0</div><div class="share-card-stat-label">Makes</div></div>
+              <div class="share-card-stat"><div class="share-card-stat-val" id="shareStatAcc">0%</div><div class="share-card-stat-label">Accuracy</div></div>
+              <div class="share-card-stat"><div class="share-card-stat-val" id="shareStatStreak">0</div><div class="share-card-stat-label">Best Streak</div></div>
+            </div>
+            <div class="share-card-footer">hoopai.app • train smarter 🏀</div>
+          </div>
+          <div class="share-card-actions">
+            <button class="share-card-dl" onclick="window.downloadShareCard()">⬇ Download</button>
+            <button class="share-card-copy" onclick="window.shareShareCard()">📤 Share</button>
+          </div>
+          <canvas id="shareCanvas" width="600" height="400"></canvas>
         </div>
 
         <div class="zones-section">
@@ -5687,6 +5732,165 @@ document.addEventListener('DOMContentLoaded', () => {
 
     renderTrend();
     document.addEventListener('visibilitychange', function() { if (!document.hidden) renderTrend(); });
+})();
+
+
+// ── Feature #32: Social Share Cards ──
+(function() {
+  function getLastSession() {
+    try {
+      var hist = JSON.parse(localStorage.getItem('hoopai_session_history') || '[]');
+      if (hist.length > 0) return hist[hist.length - 1];
+    } catch(e) {}
+    return null;
+  }
+
+  function updateShareCard() {
+    var session = getLastSession();
+    var titleEl = document.getElementById('shareCardTitle');
+    var dateEl = document.getElementById('shareCardDate');
+    var makesEl = document.getElementById('shareStatMakes');
+    var accEl = document.getElementById('shareStatAcc');
+    var streakEl = document.getElementById('shareStatStreak');
+    if (!titleEl) return;
+
+    if (session) {
+      var total = (session.makes || 0) + (session.misses || 0);
+      var acc = total > 0 ? Math.round((session.makes / total) * 100) : 0;
+      titleEl.textContent = 'Practice Session';
+      dateEl.textContent = session.date || new Date().toLocaleDateString();
+      makesEl.textContent = session.makes || 0;
+      accEl.textContent = acc + '%';
+      streakEl.textContent = session.streak || '-';
+    } else {
+      titleEl.textContent = 'No Session Yet';
+      dateEl.textContent = 'Complete a session to share';
+      makesEl.textContent = '0';
+      accEl.textContent = '0%';
+      streakEl.textContent = '0';
+    }
+  }
+
+  function drawShareCard() {
+    var canvas = document.getElementById('shareCanvas');
+    if (!canvas) return null;
+    var ctx = canvas.getContext('2d');
+    var w = 600, h = 400;
+    canvas.width = w;
+    canvas.height = h;
+
+    // Background gradient
+    var grad = ctx.createLinearGradient(0, 0, w, h);
+    grad.addColorStop(0, '#1a1a2e');
+    grad.addColorStop(0.5, '#16213e');
+    grad.addColorStop(1, '#0f3460');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+
+    // Decorative circle
+    ctx.beginPath();
+    ctx.arc(w - 30, 30, 60, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,107,53,0.15)';
+    ctx.fill();
+
+    // Basketball emoji
+    ctx.font = '48px serif';
+    ctx.globalAlpha = 0.3;
+    ctx.fillText('🏀', w - 70, 60);
+    ctx.globalAlpha = 1;
+
+    // Brand
+    ctx.font = '600 11px system-ui, sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.letterSpacing = '2px';
+    ctx.fillText('HOOPAI BASKETBALL', 30, 40);
+
+    // Title
+    var session = getLastSession();
+    ctx.font = '800 32px system-ui, sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(session ? 'Practice Session' : 'No Session Yet', 30, 85);
+
+    // Date
+    ctx.font = '400 14px system-ui, sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    var dateStr = session ? (session.date || new Date().toLocaleDateString()) : '';
+    ctx.fillText(dateStr, 30, 110);
+
+    // Stats
+    var makes = session ? (session.makes || 0) : 0;
+    var total = session ? (makes + (session.misses || 0)) : 0;
+    var acc = total > 0 ? Math.round((makes / total) * 100) : 0;
+    var streak = session ? (session.streak || '-') : '0';
+
+    var stats = [
+      { val: '' + makes, label: 'MAKES' },
+      { val: acc + '%', label: 'ACCURACY' },
+      { val: '' + streak, label: 'BEST STREAK' }
+    ];
+
+    var sx = 30;
+    var colW = (w - 60) / 3;
+    for (var i = 0; i < stats.length; i++) {
+      var cx = sx + colW * i + colW / 2;
+      ctx.font = '800 42px system-ui, sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.fillText(stats[i].val, cx, 200);
+      ctx.font = '600 11px system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.fillText(stats[i].label, cx, 225);
+    }
+    ctx.textAlign = 'left';
+
+    // Footer
+    ctx.font = '400 12px system-ui, sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.textAlign = 'center';
+    ctx.fillText('hoopai.app • train smarter 🏀', w / 2, h - 25);
+    ctx.textAlign = 'left';
+
+    return canvas;
+  }
+
+  window.downloadShareCard = function() {
+    var canvas = drawShareCard();
+    if (!canvas) return;
+    var link = document.createElement('a');
+    link.download = 'hoopai-session.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  };
+
+  window.shareShareCard = function() {
+    var canvas = drawShareCard();
+    if (!canvas) return;
+    canvas.toBlob(function(blob) {
+      if (navigator.share && blob) {
+        var file = new File([blob], 'hoopai-session.png', { type: 'image/png' });
+        navigator.share({ title: 'My HoopAI Session', files: [file] }).catch(function() {});
+      } else {
+        // Fallback: download
+        var link = document.createElement('a');
+        link.download = 'hoopai-session.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      }
+    }, 'image/png');
+  };
+
+  // Hook saveSummary to update share card
+  var _origSaveSummaryShare = window.saveSummary;
+  window.saveSummary = function() {
+    if (_origSaveSummaryShare) _origSaveSummaryShare.apply(this, arguments);
+    setTimeout(updateShareCard, 100);
+  };
+
+  // Initial render
+  updateShareCard();
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) updateShareCard();
+  });
 })();
 
 </script>
