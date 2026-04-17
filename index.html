@@ -1474,6 +1474,13 @@
   .zone-tooltip.visible { opacity: 1; }
   .zones-legend { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; font-size: 12px; color: var(--text-2); }
   .zones-legend-bar { width: 80px; height: 8px; border-radius: 4px; background: linear-gradient(to right, #2196F3, #4CAF50, #FF6B35, #F44336); }
+  /* Feature #21: Shot Zone Heatmap */
+  .heatmap-toggle-row { display: flex; align-items: center; justify-content: space-between; margin: 0 0 8px; }
+  .heatmap-toggle-btn { font-size: 12px; font-weight: 700; padding: 5px 14px; border-radius: 20px; border: 1.5px solid var(--brand); background: transparent; color: var(--brand); cursor: pointer; transition: background 0.2s, color 0.2s; }
+  .heatmap-toggle-btn.active { background: var(--brand); color: #fff; }
+  .zone-stat-chip { position: absolute; font-size: 9px; font-weight: 800; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.8); pointer-events: none; transform: translate(-50%,-50%); background: rgba(0,0,0,0.45); border-radius: 6px; padding: 1px 4px; }
+  .zones-court-wrap { position: relative; }
+
   .zones-legend-label { font-size: 11px; color: var(--text-2); }
   .zones-record-hint { text-align: center; font-size: 13px; color: var(--text-2); margin-top: 8px; }
   .zone-tap-modal { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--surface); border-radius: 16px; padding: 16px 24px; display: flex; gap: 12px; align-items: center; box-shadow: 0 8px 32px rgba(0,0,0,0.4); z-index: 8500; opacity: 0; pointer-events: none; transition: opacity 0.25s var(--spring), transform 0.25s var(--spring); transform: translateX(-50%) translateY(10px); }
@@ -2491,7 +2498,10 @@
         </div>
 
         <div class="zones-section">
-          <div class="zones-title">🗺️ Shooting Zones</div>
+          <div class="heatmap-toggle-row">
+            <span style="font-size:13px;font-weight:700;color:var(--text-1)">🗺️ Zone Heatmap</span>
+            <button class="heatmap-toggle-btn" id="heatmapToggleBtn" onclick="toggleHeatmap()">Show Heatmap</button>
+          </div>
           <div class="zones-court-wrap" id="zonesCourt">
             <svg viewBox="0 0 300 280" xmlns="http://www.w3.org/2000/svg">
               <!-- Court outline -->
@@ -3998,6 +4008,95 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Dev reset hook
+  /* ── Feature #21: Shot Zone Heatmap ─────────────────────────── */
+  (function() {
+    var heatmapActive = false;
+    var ZONE_IDS = ['paint','mid-left','mid-right','corner3-left','corner3-right'];
+    // stat chip element IDs
+    var ZONE_CENTERS = {
+      'paint':         {x:'150', y:'70'},
+      'mid-left':      {x:'67',  y:'50'},
+      'mid-right':     {x:'233', y:'50'},
+      'corner3-left':  {x:'25',  y:'45'},
+      'corner3-right': {x:'275', y:'45'}
+    };
+    // heatmap color from cold→hot based on make%
+    function heatColor(pct) {
+      if (pct === null) return 'rgba(100,100,100,0.18)';
+      if (pct >= 60) return 'rgba(244,67,54,0.72)';   // hot red
+      if (pct >= 45) return 'rgba(255,152,0,0.65)';   // orange
+      if (pct >= 30) return 'rgba(255,235,59,0.55)';  // yellow
+      return 'rgba(33,150,243,0.45)';                  // cold blue
+    }
+    function getZoneStats() {
+      var stats = {};
+      ZONE_IDS.forEach(function(z) {
+        var makes = parseInt(localStorage.getItem('hoopai_zone_makes_' + z) || '0');
+        var misses = parseInt(localStorage.getItem('hoopai_zone_misses_' + z) || '0');
+        var total = makes + misses;
+        stats[z] = total > 0 ? { makes: makes, total: total, pct: Math.round(makes/total*100) } : null;
+      });
+      return stats;
+    }
+    function applyHeatmap() {
+      var stats = getZoneStats();
+      var svg = document.querySelector('#zonesCourt svg');
+      if (!svg) return;
+      // Remove old chips
+      svg.querySelectorAll('.zone-stat-chip').forEach(function(el){ el.remove(); });
+      ZONE_IDS.forEach(function(z) {
+        var el = document.getElementById('zone-' + z);
+        if (!el) return;
+        var s = stats[z];
+        el.style.fill = heatColor(s ? s.pct : null);
+        el.style.opacity = '0.85';
+        // Add % chip
+        var c = ZONE_CENTERS[z];
+        if (s && c) {
+          var txt = document.createElementNS('http://www.w3.org/2000/svg','text');
+          txt.setAttribute('x', c.x);
+          txt.setAttribute('y', c.y);
+          txt.setAttribute('text-anchor','middle');
+          txt.setAttribute('dominant-baseline','middle');
+          txt.setAttribute('font-size','10');
+          txt.setAttribute('font-weight','800');
+          txt.setAttribute('fill','#fff');
+          txt.setAttribute('class','zone-stat-chip');
+          txt.style.pointerEvents = 'none';
+          txt.style.textShadow = '0 1px 3px rgba(0,0,0,0.9)';
+          txt.textContent = s.pct + '%';
+          svg.appendChild(txt);
+        }
+      });
+    }
+    function removeHeatmap() {
+      var svg = document.querySelector('#zonesCourt svg');
+      if (!svg) return;
+      svg.querySelectorAll('.zone-stat-chip').forEach(function(el){ el.remove(); });
+      ZONE_IDS.forEach(function(z) {
+        var el = document.getElementById('zone-' + z);
+        if (el) { el.style.fill = ''; el.style.opacity = ''; }
+      });
+    }
+    window.toggleHeatmap = function() {
+      heatmapActive = !heatmapActive;
+      var btn = document.getElementById('heatmapToggleBtn');
+      if (btn) {
+        btn.textContent = heatmapActive ? 'Hide Heatmap' : 'Show Heatmap';
+        btn.classList.toggle('active', heatmapActive);
+      }
+      if (heatmapActive) applyHeatmap(); else removeHeatmap();
+    };
+    window.refreshHeatmap = function() { if (heatmapActive) applyHeatmap(); };
+    // Hook into showTab to refresh when Progress opens
+    var _origShowHeat = window.showTab;
+    window.showTab = function(tab) {
+      if (_origShowHeat) _origShowHeat(tab);
+      if (tab === 'progress' && heatmapActive) setTimeout(applyHeatmap, 50);
+    };
+  })();
+  /* ── End Feature #21 ────────────────────────────────────────── */
+
   window.resetOnboarding = function() {
     localStorage.removeItem(DONE_KEY);
     currentStep = 0;
