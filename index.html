@@ -5410,9 +5410,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (muted) playSwish(); // preview sound on unmute
   };
 
-  // Expose for other features — patch existing sfx instead of replacing
+  // Expose for other features — patch existing sfx, preserve enhanced buzzer/cheer
   if (!window.sfx) window.sfx = {};
-  window.sfx.swish = window.sfx.swish || playSwish;
+  window.sfx.swish = playSwish;
   window.sfx.buzzer = window.sfx.buzzer || playBuzzer;
   window.sfx.cheer = window.sfx.cheer || playCheer;
 
@@ -5841,12 +5841,17 @@ document.addEventListener('DOMContentLoaded', () => {
     window.saveSummary = function() {
         if (_origSaveWGAccum) _origSaveWGAccum();
         try {
-            var sessions = JSON.parse(localStorage.getItem('hoopai_sessions') || '[]');
+            var hist = JSON.parse(localStorage.getItem('hoopai_session_history') || '[]');
             var totalMakes = 0, totalAttempts = 0;
-            sessions.forEach(function(s) { totalMakes += (s.makes || 0); totalAttempts += (s.attempts || 0); });
+            hist.forEach(function(s) {
+                var m = s.makes || 0;
+                var miss = s.misses || 0;
+                totalMakes += m;
+                totalAttempts += m + miss;
+            });
             safeSetItem('hoopai_total_makes', totalMakes);
             safeSetItem('hoopai_total_attempts', totalAttempts);
-            safeSetItem('hoopai_total_sessions', sessions.length);
+            safeSetItem('hoopai_total_sessions', hist.length);
         } catch(e) {}
     };
 
