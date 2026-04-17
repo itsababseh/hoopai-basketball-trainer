@@ -1672,6 +1672,21 @@
   .player-profile-save { grid-column: 1 / -1; padding: 11px; border: none; border-radius: 10px; background: var(--brand); color: #fff; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: transform 0.15s var(--spring); }
   .player-profile-save:active { transform: scale(0.97); }
 
+
+  /* ── Feature #36: Per-Zone Accuracy Trends ── */
+  .zone-trends-section { margin: 24px 0; max-width: 100%; overflow: hidden; box-sizing: border-box; }
+  .zone-trends-section h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; color: var(--text-1); }
+  .zone-trend-tabs { display: flex; gap: 6px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 4px; }
+  .zone-trend-tab { padding: 7px 14px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface); color: var(--text-2); font-size: 0.75rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
+  .zone-trend-tab.active { background: var(--brand); color: #fff; border-color: var(--brand); }
+  .zone-trend-chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+  .zone-trend-canvas { width: 100% !important; height: 200px !important; }
+  .zone-trend-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+  .zone-trend-stat { text-align: center; padding: 8px; background: var(--surface2); border-radius: 10px; }
+  .zone-trend-stat-val { font-size: 1.1rem; font-weight: 800; color: var(--brand); }
+  .zone-trend-stat-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-3); }
+  .zone-trend-empty { text-align: center; padding: 30px 0; color: var(--text-3); font-size: 0.85rem; }
+
   /* ── Feature #15: Personal Records & Milestones ── */
   .pr-section { margin: 24px 0; max-width: 100%; overflow: hidden; }
   .pr-section-title { font-size: 16px; font-weight: 700; color: var(--text-1); margin-bottom: 4px; }
@@ -3009,6 +3024,17 @@
               <input type="text" id="ppJersey" placeholder="#" maxlength="3">
               <button class="player-profile-save" onclick="window.savePlayerProfile()">💾 Save Profile</button>
             </div>
+          </div>
+        </div>
+
+
+        <!-- Feature #36: Per-Zone Accuracy Trends -->
+        <div class="zone-trends-section">
+          <h3>📍 Zone Accuracy Trends</h3>
+          <div class="zone-trend-tabs" id="zoneTrendTabs"></div>
+          <div class="zone-trend-chart-wrap">
+            <canvas id="zoneTrendChart" class="zone-trend-canvas"></canvas>
+            <div class="zone-trend-summary" id="zoneTrendSummary"></div>
           </div>
         </div>
 
@@ -6366,6 +6392,157 @@ document.addEventListener('DOMContentLoaded', () => {
   renderProfile();
   document.addEventListener('visibilitychange', function() {
     if (!document.hidden) renderProfile();
+  });
+})();
+
+
+// ── Feature #36: Per-Zone Accuracy Trends ──
+(function() {
+  var STORE_KEY = 'hoopai_zone_history';
+  var ZONES = [
+    { id: 'paint', name: 'Paint' },
+    { id: 'midLeft', name: 'Mid Left' },
+    { id: 'midRight', name: 'Mid Right' },
+    { id: 'freeThrow', name: 'Free Throw' },
+    { id: 'three_left', name: '3PT Left' },
+    { id: 'three_right', name: '3PT Right' },
+    { id: 'three_top', name: '3PT Top' },
+    { id: 'corner_left', name: 'Corner L' },
+    { id: 'corner_right', name: 'Corner R' }
+  ];
+
+  var activeZone = ZONES[0].id;
+  var chartInstance = null;
+
+  function getZoneHistory() {
+    try { return JSON.parse(localStorage.getItem(STORE_KEY) || '{}'); } catch(e) { return {}; }
+  }
+
+  function saveZoneHistory(h) {
+    localStorage.setItem(STORE_KEY, JSON.stringify(h));
+  }
+
+  function renderTabs() {
+    var container = document.getElementById('zoneTrendTabs');
+    if (!container) return;
+    var h = '';
+    for (var i = 0; i < ZONES.length; i++) {
+      var z = ZONES[i];
+      var cls = z.id === activeZone ? ' active' : '';
+      h += '<div class="zone-trend-tab' + cls + '" data-zone="' + z.id + '" onclick="window.selectZoneTrend(\'' + z.id + '\')">' + z.name + '</div>';
+    }
+    container.innerHTML = h;
+  }
+
+  function renderChart() {
+    var canvas = document.getElementById('zoneTrendChart');
+    if (!canvas) return;
+    var history = getZoneHistory();
+    var zoneData = history[activeZone] || [];
+    var summaryEl = document.getElementById('zoneTrendSummary');
+
+    if (zoneData.length === 0) {
+      if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+      canvas.style.display = 'none';
+      if (summaryEl) summaryEl.innerHTML = '<div class="zone-trend-empty" style="grid-column:1/-1">No data for this zone yet. Start shooting!</div>';
+      return;
+    }
+
+    canvas.style.display = 'block';
+    var last20 = zoneData.slice(-20);
+    var labels = [];
+    var values = [];
+    for (var i = 0; i < last20.length; i++) {
+      labels.push('S' + (i + 1));
+      var total = (last20[i].makes || 0) + (last20[i].misses || 0);
+      values.push(total > 0 ? Math.round((last20[i].makes / total) * 100) : 0);
+    }
+
+    var best = Math.max.apply(null, values);
+    var avg = Math.round(values.reduce(function(a, b) { return a + b; }, 0) / values.length);
+    var latest = values[values.length - 1];
+
+    if (summaryEl) {
+      summaryEl.innerHTML =
+        '<div class="zone-trend-stat"><div class="zone-trend-stat-val">' + best + '%</div><div class="zone-trend-stat-label">Best</div></div>' +
+        '<div class="zone-trend-stat"><div class="zone-trend-stat-val">' + avg + '%</div><div class="zone-trend-stat-label">Average</div></div>' +
+        '<div class="zone-trend-stat"><div class="zone-trend-stat-val">' + latest + '%</div><div class="zone-trend-stat-label">Latest</div></div>';
+    }
+
+    if (chartInstance) chartInstance.destroy();
+
+    var ctx = canvas.getContext('2d');
+    chartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Accuracy %',
+          data: values,
+          borderColor: '#FF6B35',
+          backgroundColor: 'rgba(255,107,53,0.1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.35,
+          pointRadius: 3,
+          pointBackgroundColor: '#FF6B35'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { min: 0, max: 100, ticks: { color: 'rgba(255,255,255,0.4)', callback: function(v) { return v + '%'; } }, grid: { color: 'rgba(255,255,255,0.06)' } },
+          x: { ticks: { color: 'rgba(255,255,255,0.4)' }, grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  window.selectZoneTrend = function(zoneId) {
+    activeZone = zoneId;
+    renderTabs();
+    renderChart();
+  };
+
+  // Hook recordMake and recordMiss to track zone data
+  window.recordZoneShot = function(zoneId, made) {
+    if (!zoneId) return;
+    var history = getZoneHistory();
+    if (!history[zoneId]) history[zoneId] = [];
+    var entries = history[zoneId];
+    var today = new Date().toLocaleDateString();
+    var last = entries.length > 0 ? entries[entries.length - 1] : null;
+    if (last && last.date === today) {
+      if (made) last.makes = (last.makes || 0) + 1;
+      else last.misses = (last.misses || 0) + 1;
+    } else {
+      var entry = { date: today, makes: 0, misses: 0 };
+      if (made) entry.makes = 1; else entry.misses = 1;
+      entries.push(entry);
+    }
+    if (entries.length > 50) entries.splice(0, entries.length - 50);
+    saveZoneHistory(history);
+  };
+
+  // Hook into existing zone tap if available
+  var _origRecordMakeZT = window.recordMake;
+  window.recordMake = function(zone) {
+    if (_origRecordMakeZT) _origRecordMakeZT.apply(this, arguments);
+    if (zone) window.recordZoneShot(zone, true);
+  };
+
+  var _origRecordMissZT = window.recordMiss;
+  window.recordMiss = function(zone) {
+    if (_origRecordMissZT) _origRecordMissZT.apply(this, arguments);
+    if (zone) window.recordZoneShot(zone, false);
+  };
+
+  renderTabs();
+  renderChart();
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) renderChart();
   });
 })();
 
