@@ -3446,8 +3446,8 @@ function showTab(name) {
     var tabBtn = document.querySelector(`[data-tab="${name}"]`);
     if (tabBtn) tabBtn.classList.add('active');
 
-    if (name === 'analyze')  initAnalyze();
-    if (name === 'progress') initProgress();
+    if (name === 'analyze') { analyzeInit = false; progressInit = false; initAnalyze(); }
+    if (name === 'progress') { progressInit = false; initProgress(); }
 }
 
 /* ─── CAMERA ────────────────────────────────────────────────── */
@@ -3541,28 +3541,151 @@ let analyzeInit = false;
 function initAnalyze() {
     if (analyzeInit) return;
     analyzeInit = true;
-
-    // Animate score ring (circumference = 2π×45 ≈ 283)
-    const ring = document.getElementById('scoreRing');
-    const score = 85;
-    setTimeout(() => {
-        ring.style.strokeDashoffset = 283 - (283 * score / 100);
+    var stats = computeAnalytics();
+    // Update score ring
+    var ring = document.getElementById('scoreRing');
+    var scoreEl = document.getElementById('scoreNum');
+    scoreEl.textContent = stats.overall;
+    setTimeout(function() {
+        ring.style.strokeDashoffset = 283 - (283 * stats.overall / 100);
     }, 100);
-
-    // Animate metric values
-    ['m1','m2','m3','m4'].forEach((id, i) => {
-        const el = document.getElementById(id);
-        const target = parseInt(el.textContent);
+    // Update score meta
+    var titleEl = document.querySelector('.score-title');
+    if (titleEl) titleEl.textContent = stats.tier;
+    var badgeEl = document.querySelector('.score-badge');
+    if (badgeEl) badgeEl.textContent = stats.trend;
+    // Update metric tiles
+    var metrics = [
+        { id: 'm1', val: stats.shootingPct, label: 'Shooting %', width: stats.shootingPct },
+        { id: 'm2', val: stats.consistency, label: 'Consistency', width: stats.consistency },
+        { id: 'm3', val: stats.bestZonePct, label: 'Best Zone %', width: stats.bestZonePct },
+        { id: 'm4', val: stats.sessionAvg, label: 'Avg Shots/Session', width: Math.min(stats.sessionAvg, 100) }
+    ];
+    metrics.forEach(function(m, i) {
+        var el = document.getElementById(m.id);
         el.textContent = '0';
-        setTimeout(() => animateNum(el, 0, target, 900), i * 150);
+        var bar = el.parentElement.querySelector('.mini-bar-fill');
+        if (bar) bar.dataset.width = m.width;
+        var labelEl = el.parentElement.querySelector('.metric-tile-label');
+        if (labelEl) labelEl.textContent = m.label;
+        setTimeout(function() { animateNum(el, 0, m.val, 900); }, i * 150);
     });
-
     // Animate mini-bars
-    setTimeout(() => {
-        document.querySelectorAll('.mini-bar-fill').forEach(bar => {
+    setTimeout(function() {
+        document.querySelectorAll('.mini-bar-fill').forEach(function(bar) {
             bar.style.width = bar.dataset.width + '%';
         });
     }, 200);
+    // Update insights
+    updateInsights(stats);
+}
+
+function computeAnalytics() {
+    var hist = [];
+    try { hist = JSON.parse(localStorage.getItem('hoopai_session_history') || '[]'); } catch(e) {}
+    var totalMakes = 0, totalMisses = 0;
+    hist.forEach(function(s) { totalMakes += (s.makes || 0); totalMisses += (s.misses || 0); });
+    var totalAttempts = totalMakes + totalMisses;
+    var shootingPct = totalAttempts > 0 ? Math.round(totalMakes / totalAttempts * 100) : 0;
+    // Consistency: std dev of per-session shooting % (lower = better, inverted to 0-100)
+    var sessionPcts = [];
+    hist.forEach(function(s) {
+        var a = (s.makes || 0) + (s.misses || 0);
+        if (a > 0) sessionPcts.push(Math.round((s.makes || 0) / a * 100));
+    });
+    var consistency = 50;
+    if (sessionPcts.length >= 2) {
+        var mean = sessionPcts.reduce(function(a,b){return a+b;},0) / sessionPcts.length;
+        var variance = sessionPcts.reduce(function(a,v){return a + (v-mean)*(v-mean);},0) / sessionPcts.length;
+        var stdDev = Math.sqrt(variance);
+        consistency = Math.max(0, Math.min(100, Math.round(100 - stdDev * 2)));
+    }
+    // Best zone
+    var zones = ['paint','mid-left','mid-right','corner3-left','corner3-right'];
+    var bestZone = 'paint', bestZonePct = 0;
+    zones.forEach(function(z) {
+        var m = parseInt(localStorage.getItem('hoopai_zone_makes_' + z) || '0');
+        var mi = parseInt(localStorage.getItem('hoopai_zone_misses_' + z) || '0');
+        var t = m + mi;
+        if (t > 0) {
+            var p = Math.round(m / t * 100);
+            if (p > bestZonePct) { bestZonePct = p; bestZone = z; }
+        }
+    });
+    // Avg shots per session
+    var sessionAvg = hist.length > 0 ? Math.round(totalAttempts / hist.length) : 0;
+    // Overall score: weighted combo
+    var overall = totalAttempts > 0 ? Math.round(shootingPct * 0.4 + consistency * 0.3 + bestZonePct * 0.2 + Math.min(sessionAvg, 100) * 0.1) : 0;
+    // Tier
+    var tier = 'Beginner';
+    if (overall >= 85) tier = 'Elite Shooter';
+    else if (overall >= 70) tier = 'Sharpshooter';
+    else if (overall >= 55) tier = 'Rising Star';
+    else if (overall >= 40) tier = 'Developing';
+    else if (overall > 0) tier = 'Beginner';
+    else tier = 'No Data Yet';
+    // Trend: compare last 3 sessions vs previous 3
+    var trend = '';
+    if (hist.length >= 6) {
+        var recent = hist.slice(-3), prev = hist.slice(-6, -3);
+        var rAvg = 0, pAvg = 0;
+        recent.forEach(function(s) { var a = (s.makes||0)+(s.misses||0); if(a>0) rAvg += (s.makes||0)/a; });
+        prev.forEach(function(s) { var a = (s.makes||0)+(s.misses||0); if(a>0) pAvg += (s.makes||0)/a; });
+        rAvg = Math.round(rAvg/3*100); pAvg = Math.round(pAvg/3*100);
+        var diff = rAvg - pAvg;
+        trend = diff >= 0 ? '\u2191 +' + diff + ' vs prev 3 sessions' : '\u2193 ' + diff + ' vs prev 3 sessions';
+    } else if (hist.length > 0) {
+        trend = hist.length + ' session' + (hist.length > 1 ? 's' : '') + ' recorded';
+    } else {
+        trend = 'Record sessions to see trends';
+    }
+    return {
+        overall: overall, tier: tier, trend: trend,
+        shootingPct: shootingPct, consistency: consistency,
+        bestZonePct: bestZonePct, bestZone: bestZone,
+        sessionAvg: sessionAvg, totalMakes: totalMakes,
+        totalAttempts: totalAttempts, sessionCount: hist.length,
+        hist: hist
+    };
+}
+
+function updateInsights(stats) {
+    var container = document.querySelector('#screen-analyze .insight-card');
+    if (!container) return;
+    var wrap = container.parentElement;
+    wrap.innerHTML = '';
+    var insights = [];
+    if (stats.totalAttempts === 0) {
+        insights.push({ icon: '\ud83c\udfa5', title: 'Get Started', body: 'Record your first session to unlock AI-powered shooting insights!' });
+    } else {
+        if (stats.shootingPct >= 60) {
+            insights.push({ icon: '\ud83c\udfaf', title: 'Sharp Shooter', body: 'Your <strong>' + stats.shootingPct + '%</strong> shooting is excellent! Keep it up and push for consistency across all zones.' });
+        } else if (stats.shootingPct >= 40) {
+            insights.push({ icon: '\ud83c\udfaf', title: 'Shooting Accuracy', body: 'You\'re at <strong>' + stats.shootingPct + '%</strong> overall. Focus on form fundamentals — feet set, elbow aligned, smooth follow-through.' });
+        } else {
+            insights.push({ icon: '\ud83c\udfaf', title: 'Building Foundation', body: 'At <strong>' + stats.shootingPct + '%</strong>, focus on close-range shots first. Master the paint before moving to mid-range.' });
+        }
+        if (stats.bestZonePct > 0) {
+            insights.push({ icon: '\ud83d\udccd', title: 'Hot Zone: ' + stats.bestZone.replace(/-/g,' ').replace(/\b\w/g, function(l){return l.toUpperCase();}), body: 'You shoot <strong>' + stats.bestZonePct + '%</strong> from ' + stats.bestZone.replace(/-/g,' ') + ' — your best zone. Work on weaker zones to become unpredictable.' });
+        }
+        if (stats.consistency >= 80) {
+            insights.push({ icon: '\u26a1', title: 'Machine-Like Consistency', body: 'Your consistency score of <strong>' + stats.consistency + '</strong> means your performance barely varies. Elite trait!' });
+        } else if (stats.consistency < 50) {
+            insights.push({ icon: '\u26a1', title: 'Consistency Opportunity', body: 'Your sessions vary a lot (score: <strong>' + stats.consistency + '</strong>). Try a pre-shot routine to stabilize your form.' });
+        }
+        if (stats.sessionCount >= 5) {
+            insights.push({ icon: '\ud83d\udcc8', title: 'Dedicated Trainer', body: 'With <strong>' + stats.sessionCount + ' sessions</strong> and <strong>' + stats.totalAttempts + ' shots</strong>, your commitment is paying off!' });
+        }
+    }
+    if (insights.length === 0) {
+        insights.push({ icon: '\ud83d\udcca', title: 'Keep Going', body: 'Record more sessions to unlock deeper insights about your game.' });
+    }
+    insights.forEach(function(ins) {
+        var card = document.createElement('div');
+        card.className = 'insight-card';
+        card.innerHTML = '<div class="insight-icon-wrap">' + ins.icon + '</div><div><div class="insight-title">' + ins.title + '</div><div class="insight-body">' + ins.body + '</div></div>';
+        wrap.appendChild(card);
+    });
 }
 
 function animateNum(el, from, to, dur) {
@@ -3585,18 +3708,38 @@ function initProgress() {
     drawShotChart();
 }
 
+var _weeklyChartInstance = null;
 function drawWeeklyChart() {
-    const ctx = document.getElementById('weeklyChart').getContext('2d');
-    const grad = ctx.createLinearGradient(0,0,0,140);
+    if (_weeklyChartInstance) { _weeklyChartInstance.destroy(); _weeklyChartInstance = null; }
+    var ctx = document.getElementById('weeklyChart').getContext('2d');
+    var grad = ctx.createLinearGradient(0,0,0,140);
     grad.addColorStop(0, 'rgba(255,107,53,0.25)');
     grad.addColorStop(1, 'rgba(255,107,53,0.0)');
-
-    new Chart(ctx, {
+    // Build last 7 days of shooting % from real session history
+    var hist = [];
+    try { hist = JSON.parse(localStorage.getItem('hoopai_session_history') || '[]'); } catch(e) {}
+    var dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    var labels = [], data = [];
+    for (var d = 6; d >= 0; d--) {
+        var date = new Date(); date.setDate(date.getDate() - d);
+        var dayStr = date.toISOString().split('T')[0];
+        labels.push(dayNames[date.getDay()]);
+        var dayMakes = 0, dayAttempts = 0;
+        hist.forEach(function(s) {
+            var sDate = (s.date || '').split('T')[0];
+            if (sDate === dayStr) {
+                dayMakes += (s.makes || 0);
+                dayAttempts += (s.makes || 0) + (s.misses || 0);
+            }
+        });
+        data.push(dayAttempts > 0 ? Math.round(dayMakes / dayAttempts * 100) : null);
+    }
+    _weeklyChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+            labels: labels,
             datasets: [{
-                data: [72, 76, 78, 80, 83, 82, 84],
+                data: data,
                 fill: true,
                 backgroundColor: grad,
                 borderColor: '#FF6B35',
@@ -3607,6 +3750,7 @@ function drawWeeklyChart() {
                 pointBorderWidth: 2,
                 pointRadius: 4,
                 pointHoverRadius: 6,
+                spanGaps: true,
             }]
         },
         options: {
@@ -3619,13 +3763,14 @@ function drawWeeklyChart() {
                 bodyColor:'rgba(255,255,255,0.7)',
                 padding:10,
                 cornerRadius:10,
+                callbacks: { label: function(ctx) { return ctx.parsed.y !== null ? ctx.parsed.y + '%' : 'No data'; } }
             }},
             scales: {
                 x: { grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'rgba(255,255,255,0.35)',font:{size:11}} },
                 y: {
-                    min:60, max:100,
+                    min:0, max:100,
                     grid:{color:'rgba(255,255,255,0.05)'},
-                    ticks:{color:'rgba(255,255,255,0.35)',font:{size:11}}
+                    ticks:{color:'rgba(255,255,255,0.35)',font:{size:11}, callback: function(v){return v+'%';} }
                 }
             }
         }
@@ -3633,17 +3778,49 @@ function drawWeeklyChart() {
 }
 
 function drawShotChart() {
-    const g = document.getElementById('shotMarkers');
+    var g = document.getElementById('shotMarkers');
     g.innerHTML = '';
-    const shots = generateShots();
-
-    shots.made.forEach((s, i) => {
-        const c = makeShotDot(s.x, s.y, '#30D158', i * 60);
-        g.appendChild(c);
+    // Use real zone data to place dots in approximate court regions
+    var zoneRegions = {
+        'paint': { xMin:100, xMax:190, yMin:150, yMax:220 },
+        'mid-left': { xMin:50, xMax:110, yMin:100, yMax:200 },
+        'mid-right': { xMin:180, xMax:240, yMin:100, yMax:200 },
+        'corner3-left': { xMin:40, xMax:80, yMin:230, yMax:300 },
+        'corner3-right': { xMin:210, xMax:250, yMin:230, yMax:300 }
+    };
+    var zones = ['paint','mid-left','mid-right','corner3-left','corner3-right'];
+    var allMade = [], allMissed = [];
+    zones.forEach(function(z) {
+        var makes = parseInt(localStorage.getItem('hoopai_zone_makes_' + z) || '0');
+        var misses = parseInt(localStorage.getItem('hoopai_zone_misses_' + z) || '0');
+        var r = zoneRegions[z];
+        // Cap dots per zone at 10 for readability, scale proportionally
+        var maxDots = 10;
+        var total = makes + misses;
+        var scale = total > maxDots ? maxDots / total : 1;
+        var mCount = Math.round(makes * scale);
+        var miCount = Math.round(misses * scale);
+        for (var i = 0; i < mCount; i++) {
+            allMade.push({ x: r.xMin + Math.random()*(r.xMax-r.xMin), y: r.yMin + Math.random()*(r.yMax-r.yMin) });
+        }
+        for (var i = 0; i < miCount; i++) {
+            allMissed.push({ x: r.xMin + Math.random()*(r.xMax-r.xMin), y: r.yMin + Math.random()*(r.yMax-r.yMin) });
+        }
     });
-    shots.missed.forEach((s, i) => {
-        const c = makeShotDot(s.x, s.y, '#FF453A', shots.made.length * 60 + i * 60);
-        g.appendChild(c);
+    // If no real data, show a "no data" message
+    if (allMade.length === 0 && allMissed.length === 0) {
+        var txt = document.createElementNS('http://www.w3.org/2000/svg','text');
+        txt.setAttribute('x','145'); txt.setAttribute('y','175');
+        txt.setAttribute('text-anchor','middle'); txt.setAttribute('fill','rgba(255,255,255,0.3)');
+        txt.setAttribute('font-size','14'); txt.textContent = 'Record zone shots to see your chart';
+        g.appendChild(txt);
+        return;
+    }
+    allMade.forEach(function(s, i) {
+        g.appendChild(makeShotDot(s.x, s.y, '#30D158', i * 60));
+    });
+    allMissed.forEach(function(s, i) {
+        g.appendChild(makeShotDot(s.x, s.y, '#FF453A', allMade.length * 60 + i * 60));
     });
 }
 
