@@ -4,27 +4,27 @@
   "description": "AI-powered basketball shot analysis and elite training workouts",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#1a1a1a",
+  "background_color": "#0A0A0A",
   "theme_color": "#FF6B35",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%23FF6B35'/%3E%3Ctext x='50' y='65' text-anchor='middle' fill='white' font-size='40' font-family='Arial'%3E🏀%3C/text%3E%3C/svg%3E",
+      "src": "./icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%23FF6B35'/%3E%3Ctext x='50' y='65' text-anchor='middle' fill='white' font-size='40' font-family='Arial'%3E🏀%3C/text%3E%3C/svg%3E",
+      "src": "./icons/icon-512.png",
       "sizes": "512x512",
-      "type": "image/svg+xml"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ],
-  "categories": ["sports", "fitness", "education"],
-  "screenshots": [
-    {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 640'%3E%3Crect width='320' height='640' fill='%23234'/%3E%3Ctext x='160' y='320' text-anchor='middle' fill='%23FF6B35' font-size='24'%3EHoopAI Basketball Training%3C/text%3E%3C/svg%3E",
-      "sizes": "320x640",
-      "type": "image/svg+xml"
-    }
-  ]
+  "categories": [
+    "sports",
+    "fitness",
+    "education"
+  ],
+  "screenshots": []
 }
