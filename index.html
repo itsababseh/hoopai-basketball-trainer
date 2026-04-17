@@ -56,8 +56,11 @@
         --border-hover: rgba(0,0,0,0.16);
         --text-1: #000000;
         --text-2: rgba(0,0,0,0.60);
-        --text-3: rgba(0,0,0,0.35);
+        --text-3: rgba(0,0,0,0.55);
     }
+    [data-theme="light"] .nav-inner { background: rgba(255,255,255,0.88); border-top: 1px solid rgba(0,0,0,0.08); }
+    [data-theme="light"] .nav-btn { color: rgba(0,0,0,0.45); }
+    [data-theme="light"] .nav-btn.active { color: var(--brand); }
 
     /* ─── THEME TOGGLE BUTTON ─────────────────────────────── */
     #themeToggle {
@@ -65,8 +68,8 @@
         top: 14px;
         right: 16px;
         z-index: 999;
-        width: 40px;
-        height: 40px;
+        width: 44px;
+        height: 44px;
         border-radius: 50%;
         border: none;
         background: var(--surface2);
@@ -108,6 +111,7 @@
         transform: translateX(-50%) translateY(0);
     }
     #offlineBanner.online { background: #1C3A25; }
+    [data-theme="light"] #offlineBanner { background: #E5E5EA; color: #1C1C1E; }
     .offline-dot {
         width: 8px; height: 8px; border-radius: 50%;
         background: var(--red); flex-shrink: 0;
@@ -1937,7 +1941,7 @@
   .fire-day-icon { font-size: 20px; line-height: 1; }
   .fire-day-label { font-size: 9px; font-weight: 700; color: var(--text-2); text-transform: uppercase; }
   .fire-day.today .fire-day-label { color: var(--brand); }
-  .streak-toast { position: fixed; top: 72px; left: 50%; transform: translateX(-50%) translateY(-80px); background: linear-gradient(135deg, var(--brand), #FFB347); color: #fff; border-radius: 24px; padding: 10px 20px; font-size: 14px; font-weight: 800; z-index: 5000; transition: transform 0.5s var(--spring), opacity 0.5s; opacity: 0; white-space: nowrap; pointer-events: none; box-shadow: 0 4px 20px rgba(255,107,53,0.5); }
+  .streak-toast { position: fixed; top: 130px; left: 50%; transform: translateX(-50%) translateY(-80px); background: linear-gradient(135deg, var(--brand), #FFB347); color: #fff; border-radius: 24px; padding: 10px 20px; font-size: 14px; font-weight: 800; z-index: 5000; transition: transform 0.5s var(--spring), opacity 0.5s; opacity: 0; white-space: nowrap; pointer-events: none; box-shadow: 0 4px 20px rgba(255,107,53,0.5); }
   .streak-toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
   /* Feature #23: Session Notes / Journal */
@@ -3425,6 +3429,11 @@
 </div>
 
 <script>
+/* ─── SAFE STORAGE HELPER ───────────────────────────────────── */
+window.safeSetItem = function(key, value) {
+  try { localStorage.setItem(key, value); } catch(e) { console.warn('Storage full:', key); }
+};
+
 /* ─── DATA ──────────────────────────────────────────────────── */
 const VIDEOS = {
     'bam-featured':    { title: 'What Makes Great Shooters, Great',        channel: 'By Any Means Basketball', id: 'nC2b_ZfAeZg' },
@@ -3440,8 +3449,10 @@ const VIDEOS = {
 function showTab(name) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('screen-' + name).classList.add('active');
-    document.querySelector(`[data-tab="${name}"]`).classList.add('active');
+    var screenEl = document.getElementById('screen-' + name);
+    if (screenEl) screenEl.classList.add('active');
+    var tabBtn = document.querySelector(`[data-tab="${name}"]`);
+    if (tabBtn) tabBtn.classList.add('active');
 
     if (name === 'analyze')  initAnalyze();
     if (name === 'progress') initProgress();
@@ -4004,10 +4015,10 @@ document.addEventListener('DOMContentLoaded', () => {
   window.saveSummary = function() {
     var prevSessions = parseInt(localStorage.getItem('hoopai_sessions') || '0');
     var prevShots = parseInt(localStorage.getItem('hoopai_shots') || '0');
-    localStorage.setItem('hoopai_sessions', prevSessions + 1);
-    localStorage.setItem('hoopai_shots', prevShots + (window.sessionAttempts || 0));
+    safeSetItem('hoopai_sessions', prevSessions + 1);
+    safeSetItem('hoopai_shots', prevShots + (window.sessionAttempts || 0));
     var today = new Date().toDateString();
-    localStorage.setItem('hoopai_last_session', today);
+    safeSetItem('hoopai_last_session', today);
     newSession();
     var st = document.getElementById('statusText');
     if (st) st.textContent = '✅ Session saved! Great work.';
@@ -4100,7 +4111,7 @@ document.addEventListener('DOMContentLoaded', () => {
     var today = new Date();
     var key = dateKey(today);
     var prev = parseInt(localStorage.getItem(key) || '0');
-    localStorage.setItem(key, prev + (window.sessionAttempts || 0));
+    safeSetItem(key, prev + (window.sessionAttempts || 0));
   };
 
   // Expose render for tab init
@@ -5246,7 +5257,7 @@ document.addEventListener('DOMContentLoaded', () => {
   window.saveSummary = function() {
     var todayKey = getTodayKey();
     var prev = parseInt(localStorage.getItem(todayKey) || '0');
-    localStorage.setItem(todayKey, prev + (window.sessionAttempts || 0));
+    safeSetItem(todayKey, prev + (window.sessionAttempts || 0));
     updateRing(getTodayShots(), getGoal());
     if (_origSave) _origSave();
   };
@@ -5301,23 +5312,23 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (lastSession === yesterday) {
       // Consecutive day — increment
       streak = streak + 1;
-      localStorage.setItem('hoopai_streak', streak);
+      safeSetItem('hoopai_streak', streak);
     } else if (lastSession === '') {
       // First ever session
       streak = 1;
-      localStorage.setItem('hoopai_streak', streak);
+      safeSetItem('hoopai_streak', streak);
     } else {
       // Missed a day — reset
       streak = 1;
-      localStorage.setItem('hoopai_streak', streak);
+      safeSetItem('hoopai_streak', streak);
     }
 
     var best = getBestStreak();
     if (streak > best) {
-      localStorage.setItem('hoopai_best_streak', streak);
+      safeSetItem('hoopai_best_streak', streak);
     }
 
-    localStorage.setItem('hoopai_last_session', today);
+    safeSetItem('hoopai_last_session', today);
     refreshStreakUI();
   }
 
@@ -6434,7 +6445,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  setInterval(checkReminders, 30000);
+  var _reminderInterval = setInterval(checkReminders, 30000);
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden) { clearInterval(_reminderInterval); }
+    else { _reminderInterval = setInterval(checkReminders, 30000); }
+  });
 
   // Request notification permission on first interaction
   document.addEventListener('click', function reqPerm() {
