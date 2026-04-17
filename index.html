@@ -79,6 +79,41 @@
     }
     #themeToggle:active { transform: scale(0.88); }
 
+    /* ─── CONFETTI CANVAS ────────────────────────────────────── */
+    #confettiCanvas {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        pointer-events: none;
+        z-index: 9999;
+        display: none;
+    }
+
+    /* ─── CELEBRATION TOAST ──────────────────────────────────── */
+    #celebToast {
+        position: fixed;
+        top: 72px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-20px);
+        background: linear-gradient(135deg, var(--brand), #FF8A5B);
+        color: #fff;
+        padding: 12px 24px;
+        border-radius: 32px;
+        font-size: 16px;
+        font-weight: 800;
+        letter-spacing: 0.3px;
+        box-shadow: 0 4px 20px rgba(255,107,53,0.5);
+        opacity: 0;
+        pointer-events: none;
+        z-index: 9998;
+        transition: opacity 0.3s ease, transform 0.3s var(--spring);
+        white-space: nowrap;
+    }
+    #celebToast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     html { height: 100%; scroll-behavior: smooth; }
@@ -1683,6 +1718,8 @@
 </head>
 <body>
     <button id="themeToggle" onclick="window.toggleTheme()" title="Toggle theme">🌙</button>
+    <canvas id="confettiCanvas"></canvas>
+    <div id="celebToast"></div>
   <!-- Feature #18: Practice Reminder Banner -->
   <div class="reminder-banner" id="reminderBanner">
     <div class="reminder-banner-icon">🏀</div>
@@ -5045,6 +5082,114 @@ document.addEventListener('DOMContentLoaded', () => {
 
     var saved = localStorage.getItem(THEME_KEY) || 'dark';
     applyTheme(saved);
+})();
+
+
+/* ─── FEATURE #27: CONFETTI & CELEBRATION ANIMATIONS ────── */
+(function() {
+    var canvas = document.getElementById('confettiCanvas');
+    var ctx = canvas ? canvas.getContext('2d') : null;
+    var particles = [];
+    var animId = null;
+    var COLORS = ['#FF6B35','#FF8A5B','#FFD60A','#30D158','#0A84FF','#BF5AF2','#FF453A','#FFFFFF'];
+
+    function resize() {
+        if (!canvas) return;
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function Particle(x, y) {
+        this.x = x;
+        this.y = y;
+        this.vx = (Math.random() - 0.5) * 8;
+        this.vy = Math.random() * -12 - 4;
+        this.gravity = 0.4;
+        this.color = COLORS[Math.floor(Math.random() * COLORS.length)];
+        this.w = Math.random() * 10 + 5;
+        this.h = Math.random() * 6 + 3;
+        this.angle = Math.random() * Math.PI * 2;
+        this.spin = (Math.random() - 0.5) * 0.3;
+        this.alpha = 1;
+        this.decay = Math.random() * 0.012 + 0.006;
+    }
+
+    function step() {
+        if (!ctx) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles = particles.filter(function(p) { return p.alpha > 0.01; });
+        particles.forEach(function(p) {
+            p.x += p.vx;
+            p.vy += p.gravity;
+            p.y += p.vy;
+            p.angle += p.spin;
+            p.alpha -= p.decay;
+            ctx.save();
+            ctx.globalAlpha = Math.max(0, p.alpha);
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.angle);
+            ctx.fillStyle = p.color;
+            ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+            ctx.restore();
+        });
+        if (particles.length > 0) {
+            animId = requestAnimationFrame(step);
+        } else {
+            canvas.style.display = 'none';
+        }
+    }
+
+    function burst(x, y, count) {
+        if (!canvas) return;
+        canvas.style.display = 'block';
+        for (var i = 0; i < count; i++) {
+            particles.push(new Particle(x, y));
+        }
+        if (animId) cancelAnimationFrame(animId);
+        step();
+    }
+
+    function showCelebToast(msg) {
+        var t = document.getElementById('celebToast');
+        if (!t) return;
+        t.textContent = msg;
+        t.classList.add('show');
+        setTimeout(function() { t.classList.remove('show'); }, 2800);
+    }
+
+    window.triggerConfetti = function(msg) {
+        var cx = window.innerWidth / 2;
+        var cy = window.innerHeight * 0.4;
+        burst(cx, cy, 120);
+        if (msg) showCelebToast(msg);
+    };
+
+    // Hook: celebrate on milestone makes (every 5 makes in a session)
+    var _origRecordMakeC = window.recordMake;
+    window.recordMake = function() {
+        if (_origRecordMakeC) _origRecordMakeC.apply(this, arguments);
+        var makes = parseInt(localStorage.getItem('hoopai_session_makes') || '0');
+        if (makes > 0 && makes % 5 === 0) {
+            var msgs = ['\uD83D\uDD25 ' + makes + ' makes! On fire!', '\uD83C\uDFC0 ' + makes + ' buckets! Keep going!', '\u2B50 ' + makes + ' makes! You\'re locked in!'];
+            window.triggerConfetti(msgs[Math.floor(Math.random() * msgs.length)]);
+        }
+    };
+
+    // Hook: celebrate session end with good accuracy
+    var _origSaveSummaryC = window.saveSummary;
+    window.saveSummary = function() {
+        var makes = parseInt(localStorage.getItem('hoopai_session_makes') || '0');
+        var total = parseInt(localStorage.getItem('hoopai_session_total') || '0');
+        var pct = total > 0 ? Math.round(makes / total * 100) : 0;
+        if (_origSaveSummaryC) _origSaveSummaryC.apply(this, arguments);
+        if (makes >= 5 && pct >= 50) {
+            setTimeout(function() {
+                window.triggerConfetti('\uD83C\uDFC6 ' + pct + '% shooting — Great session!');
+            }, 500);
+        }
+    };
 })();
 
 </script>
