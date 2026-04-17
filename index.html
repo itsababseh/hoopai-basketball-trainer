@@ -2087,6 +2087,17 @@
   .drill-start-btn { background: var(--brand); color: #fff; border: none; border-radius: 10px; padding: 9px 20px; font-size: 13px; font-weight: 700; cursor: pointer; transition: transform 0.2s var(--spring); }
   .drill-start-btn:active { transform: scale(0.95); }
 
+  /* ── Empty States ── */
+  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 48px 24px; text-align: center; }
+  .empty-state-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.6; }
+  .empty-state-title { font-size: 18px; font-weight: 800; color: var(--text-1); margin-bottom: 8px; }
+  .empty-state-body { font-size: 14px; color: var(--text-3); line-height: 1.5; max-width: 280px; }
+  .empty-state-cta { margin-top: 20px; background: var(--brand); color: #fff; border: none; border-radius: 12px; padding: 12px 24px; font-size: 14px; font-weight: 700; cursor: pointer; min-height: 44px; }
+  .analyze-content { transition: opacity 0.3s; }
+  .analyze-content.hidden { display: none; }
+  .analyze-empty { display: none; }
+  .analyze-empty.visible { display: flex; }
+
 </style>
 </head>
 <body>
@@ -2410,6 +2421,15 @@
         <!-- ── ANALYZE ────────────────────────────────────────── -->
         <div id="screen-analyze" class="screen">
 
+            <!-- Empty state (shown when no sessions recorded) -->
+            <div class="analyze-empty empty-state" id="analyzeEmpty">
+                <div class="empty-state-icon">🏀</div>
+                <div class="empty-state-title">No Sessions Yet</div>
+                <div class="empty-state-body">Record your first shooting session to unlock performance analytics, shooting charts, and AI-powered insights.</div>
+                <button class="empty-state-cta" onclick="showTab('record')">▶ Start Recording</button>
+            </div>
+
+            <div class="analyze-content" id="analyzeContent">
             <!-- Overall score -->
             <div class="score-hero">
                 <div class="score-ring-wrap">
@@ -2494,7 +2514,7 @@
                 </div>
             </div>
 
-        </div>
+        </div></div>
 
         <!-- ── TRAIN ──────────────────────────────────────────── -->
         <div id="screen-train" class="screen">
@@ -3542,6 +3562,15 @@ function initAnalyze() {
     if (analyzeInit) return;
     analyzeInit = true;
     var stats = computeAnalytics();
+    var emptyEl = document.getElementById('analyzeEmpty');
+    var contentEl = document.getElementById('analyzeContent');
+    if (stats.totalAttempts === 0) {
+        if (emptyEl) emptyEl.classList.add('visible');
+        if (contentEl) contentEl.classList.add('hidden');
+        return;
+    }
+    if (emptyEl) emptyEl.classList.remove('visible');
+    if (contentEl) contentEl.classList.remove('hidden');
     // Update score ring
     var ring = document.getElementById('scoreRing');
     var scoreEl = document.getElementById('scoreNum');
