@@ -1474,6 +1474,20 @@
   .zone-tooltip.visible { opacity: 1; }
   .zones-legend { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; font-size: 12px; color: var(--text-2); }
   .zones-legend-bar { width: 80px; height: 8px; border-radius: 4px; background: linear-gradient(to right, #2196F3, #4CAF50, #FF6B35, #F44336); }
+  /* Feature #23: Session Notes / Journal */
+  .session-notes-wrap { margin: 16px 0 0; }
+  .session-notes-label { font-size: 12px; font-weight: 700; color: var(--text-2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .session-notes-input { width: 100%; min-height: 72px; background: var(--surface2,#1e1e2e); border: 1.5px solid rgba(255,255,255,0.1); border-radius: 10px; color: var(--text-1); font-size: 14px; padding: 10px 12px; resize: vertical; font-family: inherit; box-sizing: border-box; }
+  .session-notes-input:focus { outline: none; border-color: var(--brand); }
+  .journal-section { margin: 24px 0 0; }
+  .journal-section-title { font-size: 15px; font-weight: 800; color: var(--text-1); margin-bottom: 12px; }
+  .journal-entry { background: var(--surface); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; border-left: 3px solid var(--brand); }
+  .journal-entry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .journal-entry-date { font-size: 11px; font-weight: 700; color: var(--brand); }
+  .journal-entry-stats { font-size: 11px; color: var(--text-2); }
+  .journal-entry-note { font-size: 13px; color: var(--text-1); line-height: 1.4; margin-top: 4px; }
+  .journal-empty { font-size: 13px; color: var(--text-2); text-align: center; padding: 20px; }
+
   /* Feature #22: Voice Feedback */
   .voice-toggle-row { display: flex; align-items: center; justify-content: space-between; margin: 0 0 12px; padding: 10px 14px; background: var(--surface); border-radius: 12px; }
   .voice-toggle-label { font-size: 13px; font-weight: 700; color: var(--text-1); }
@@ -2454,6 +2468,12 @@
         </div>
 
 
+
+        <!-- Feature #23: Session Notes Journal -->
+        <div class="journal-section" id="journalSection">
+          <div class="journal-section-title">📓 Session Journal</div>
+          <div id="journalList"><div class="journal-empty">No sessions logged yet. End a session to add notes.</div></div>
+        </div>
 
         <!-- Feature #15: Personal Records & Milestones -->
         <div class="pr-section">
@@ -4031,6 +4051,70 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Dev reset hook
+  /* ── Feature #23: Session Notes / Journal ──────────────────── */
+  (function() {
+    var JOURNAL_KEY = 'hoopai_journal';
+
+    function getJournal() {
+      try { return JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]'); } catch(e) { return []; }
+    }
+    function saveJournal(entries) {
+      localStorage.setItem(JOURNAL_KEY, JSON.stringify(entries));
+    }
+
+    window.renderJournal = function() {
+      var list = document.getElementById('journalList');
+      if (!list) return;
+      var entries = getJournal();
+      if (!entries.length) {
+        list.innerHTML = '<div class="journal-empty">No sessions logged yet. End a session to add notes.</div>';
+        return;
+      }
+      list.innerHTML = entries.slice().reverse().slice(0, 20).map(function(e) {
+        var noteHtml = e.note ? '<div class="journal-entry-note">' + e.note.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>' : '';
+        return '<div class="journal-entry">' +
+          '<div class="journal-entry-header">' +
+            '<span class="journal-entry-date">' + e.date + '</span>' +
+            '<span class="journal-entry-stats">' + e.makes + '/' + e.attempts + ' (' + e.pct + '%) ' + e.shotType + '</span>' +
+          '</div>' + noteHtml + '</div>';
+      }).join('');
+    };
+
+    // Hook saveSummary to capture note + stats
+    var _origSaveNotes = window.saveSummary;
+    window.saveSummary = function() {
+      var noteEl = document.getElementById('sessionNotesInput');
+      var note = noteEl ? noteEl.value.trim() : '';
+      var makes = window.sessionMakes || 0;
+      var attempts = window.sessionAttempts || 0;
+      var misses = attempts - makes;
+      var pct = attempts > 0 ? Math.round(makes / attempts * 100) : 0;
+      var shotTypeEl = document.getElementById('summaryShotType');
+      var shotType = shotTypeEl ? shotTypeEl.textContent : '--';
+      var entry = {
+        date: new Date().toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}),
+        makes: makes, misses: misses, attempts: attempts, pct: pct,
+        shotType: shotType, note: note, ts: Date.now()
+      };
+      var entries = getJournal();
+      entries.push(entry);
+      if (entries.length > 100) entries = entries.slice(-100);
+      saveJournal(entries);
+      if (noteEl) noteEl.value = '';
+      if (_origSaveNotes) _origSaveNotes();
+    };
+
+    // Hook showTab to render journal when Progress opens
+    var _origShowJournal = window.showTab;
+    window.showTab = function(tab) {
+      if (_origShowJournal) _origShowJournal(tab);
+      if (tab === 'progress') setTimeout(window.renderJournal, 50);
+    };
+
+    document.addEventListener('DOMContentLoaded', window.renderJournal);
+  })();
+  /* ── End Feature #23 ────────────────────────────────────────── */
+
   /* ── Feature #22: Voice Feedback ───────────────────────────── */
   (function() {
     var VOICE_KEY = 'hoopai_voice_enabled';
@@ -4845,6 +4929,10 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="summary-card-val" id="summaryShotType">--</div>
           <div class="summary-card-label">Shot Type</div>
         </div>
+      </div>
+      <div class="session-notes-wrap">
+        <div class="session-notes-label">📝 Session Notes</div>
+        <textarea class="session-notes-input" id="sessionNotesInput" placeholder="How did it feel? Focus areas, drills, mental game..."></textarea>
       </div>
       <div class="summary-actions">
         <button class="summary-save-btn" onclick="saveSummary()">💾 Save Session</button>
