@@ -1563,6 +1563,20 @@
   .timer-drill-name { font-size: 11px; color: var(--brand); font-weight: 600; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 
+  /* ── Feature #31: Shot Accuracy Trends ── */
+  .accuracy-trend-section { margin: 24px 0; max-width: 100%; overflow: hidden; box-sizing: border-box; }
+  .accuracy-trend-title { font-size: 16px; font-weight: 700; color: var(--text-1); margin-bottom: 4px; }
+  .accuracy-trend-sub { font-size: 12px; color: var(--text-2); margin-bottom: 14px; }
+  .accuracy-trend-card {
+    background: var(--surface); border-radius: var(--radius-lg); padding: 16px;
+    border: 1px solid var(--border); max-width: 100%; box-sizing: border-box; overflow: hidden;
+  }
+  .accuracy-trend-canvas { width: 100%; max-height: 180px; }
+  .accuracy-trend-stats { display: flex; gap: 12px; margin-top: 12px; justify-content: center; }
+  .accuracy-trend-stat { text-align: center; }
+  .accuracy-trend-stat-val { font-size: 18px; font-weight: 800; color: var(--brand); }
+  .accuracy-trend-stat-lbl { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+
   /* ── Feature #15: Personal Records & Milestones ── */
   .pr-section { margin: 24px 0; max-width: 100%; overflow: hidden; }
   .pr-section-title { font-size: 16px; font-weight: 700; color: var(--text-1); margin-bottom: 4px; }
@@ -2793,6 +2807,29 @@
               <div class="weekly-chart-stat">
                 <div class="weekly-chart-stat-val" id="weeklyBest">—</div>
                 <div class="weekly-chart-stat-lbl">Best Day</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Feature #31: Shot Accuracy Trends -->
+        <div class="accuracy-trend-section">
+          <div class="accuracy-trend-title">📈 Accuracy Trend</div>
+          <div class="accuracy-trend-sub">Shooting % over your last 30 sessions</div>
+          <div class="accuracy-trend-card">
+            <canvas id="accuracyTrendCanvas" class="accuracy-trend-canvas"></canvas>
+            <div class="accuracy-trend-stats">
+              <div class="accuracy-trend-stat">
+                <div class="accuracy-trend-stat-val" id="atBest">—</div>
+                <div class="accuracy-trend-stat-lbl">Best</div>
+              </div>
+              <div class="accuracy-trend-stat">
+                <div class="accuracy-trend-stat-val" id="atAvg">—</div>
+                <div class="accuracy-trend-stat-lbl">Average</div>
+              </div>
+              <div class="accuracy-trend-stat">
+                <div class="accuracy-trend-stat-val" id="atLatest">—</div>
+                <div class="accuracy-trend-stat-lbl">Latest</div>
               </div>
             </div>
           </div>
@@ -5540,6 +5577,116 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!navigator.onLine) {
         updatePill(false);
     }
+})();
+
+
+/* ─── FEATURE #31: SHOT ACCURACY TRENDS ─────────────────── */
+(function() {
+    var HISTORY_KEY = 'hoopai_session_history';
+    var chart = null;
+
+    function getHistory() {
+        try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch(e) { return []; }
+    }
+
+    function renderTrend() {
+        var canvas = document.getElementById('accuracyTrendCanvas');
+        if (!canvas) return;
+        var history = getHistory().slice(-30);
+        if (!history.length) {
+            document.getElementById('atBest').textContent = '—';
+            document.getElementById('atAvg').textContent = '—';
+            document.getElementById('atLatest').textContent = '—';
+            return;
+        }
+
+        var labels = history.map(function(s, i) {
+            if (s.date) {
+                var d = new Date(s.date);
+                return (d.getMonth()+1) + '/' + d.getDate();
+            }
+            return '#' + (i+1);
+        });
+        var data = history.map(function(s) {
+            var total = (s.makes || 0) + (s.misses || 0);
+            return total > 0 ? Math.round(s.makes / total * 100) : 0;
+        });
+
+        var best = Math.max.apply(null, data);
+        var avg  = Math.round(data.reduce(function(a,b){return a+b;}, 0) / data.length);
+        var latest = data[data.length - 1];
+
+        var bestEl = document.getElementById('atBest');
+        var avgEl = document.getElementById('atAvg');
+        var latestEl = document.getElementById('atLatest');
+        if (bestEl) bestEl.textContent = best + '%';
+        if (avgEl) avgEl.textContent = avg + '%';
+        if (latestEl) latestEl.textContent = latest + '%';
+
+        if (typeof Chart === 'undefined') return;
+
+        if (chart) chart.destroy();
+
+        var ctx = canvas.getContext('2d');
+        var brandColor = getComputedStyle(document.documentElement).getPropertyValue('--brand').trim() || '#FF6B35';
+
+        chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Accuracy %',
+                    data: data,
+                    borderColor: brandColor,
+                    backgroundColor: 'rgba(255,107,53,0.1)',
+                    borderWidth: 2.5,
+                    pointRadius: data.length > 15 ? 0 : 3,
+                    pointBackgroundColor: brandColor,
+                    tension: 0.35,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) { return ctx.parsed.y + '%'; }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        min: 0, max: 100,
+                        ticks: { callback: function(v) { return v + '%'; }, color: 'rgba(255,255,255,0.4)', font: { size: 10 } },
+                        grid: { color: 'rgba(255,255,255,0.06)' }
+                    },
+                    x: {
+                        ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 9 }, maxRotation: 0 },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+
+    // Hook saveSummary to store session history for trend
+    var _origSaveSummaryTrend = window.saveSummary;
+    window.saveSummary = function() {
+        var makes = parseInt(localStorage.getItem('hoopai_session_makes') || '0');
+        var misses = parseInt(localStorage.getItem('hoopai_session_misses') || '0');
+        var history = getHistory();
+        history.push({ makes: makes, misses: misses, date: Date.now() });
+        if (history.length > 100) history = history.slice(-100);
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+        if (_origSaveSummaryTrend) _origSaveSummaryTrend.apply(this, arguments);
+        renderTrend();
+    };
+
+    renderTrend();
+    document.addEventListener('visibilitychange', function() { if (!document.hidden) renderTrend(); });
 })();
 
 </script>
