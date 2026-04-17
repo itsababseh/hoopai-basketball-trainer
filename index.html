@@ -1427,6 +1427,28 @@
   .reminder-banner-cta { background: rgba(255,255,255,0.25); border: none; border-radius: 12px; padding: 6px 12px; color: #fff; font-size: 12px; font-weight: 700; cursor: pointer; flex-shrink: 0; transition: background 0.2s; }
   .reminder-banner-cta:hover { background: rgba(255,255,255,0.4); }
 
+
+  /* ── Feature #19: Animated Onboarding Tips ── */
+  .onboard-overlay { position: fixed; inset: 0; z-index: 600; pointer-events: none; }
+  .onboard-overlay.active { pointer-events: all; }
+  .onboard-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.6); opacity: 0; transition: opacity 0.3s; }
+  .onboard-overlay.active .onboard-backdrop { opacity: 1; }
+  .onboard-tooltip { position: absolute; background: var(--surface); border-radius: 16px; padding: 18px 20px; max-width: 280px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); border: 1.5px solid var(--brand); transform: scale(0.85); opacity: 0; transition: transform 0.4s var(--spring), opacity 0.3s; pointer-events: none; }
+  .onboard-overlay.active .onboard-tooltip { transform: scale(1); opacity: 1; pointer-events: all; }
+  .onboard-tooltip-arrow { position: absolute; width: 12px; height: 12px; background: var(--surface); border: 1.5px solid var(--brand); transform: rotate(45deg); }
+  .onboard-tooltip-step { font-size: 11px; font-weight: 700; color: var(--brand); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+  .onboard-tooltip-title { font-size: 15px; font-weight: 800; color: var(--text-1); margin-bottom: 6px; }
+  .onboard-tooltip-desc { font-size: 13px; color: var(--text-2); line-height: 1.5; }
+  .onboard-tooltip-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+  .onboard-dots { display: flex; gap: 5px; }
+  .onboard-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); transition: background 0.2s; }
+  .onboard-dot.active { background: var(--brand); }
+  .onboard-btn-row { display: flex; gap: 8px; }
+  .onboard-skip-btn { background: transparent; border: none; color: var(--text-2); font-size: 12px; cursor: pointer; padding: 4px 8px; }
+  .onboard-next-btn { background: var(--brand); color: #fff; border: none; border-radius: 10px; padding: 7px 16px; font-size: 13px; font-weight: 700; cursor: pointer; transition: transform 0.15s var(--spring); }
+  .onboard-next-btn:active { transform: scale(0.93); }
+  .onboard-highlight { position: absolute; border-radius: 12px; box-shadow: 0 0 0 4px var(--brand), 0 0 0 9999px rgba(0,0,0,0.6); pointer-events: none; transition: all 0.4s var(--spring); z-index: 601; }
+
   /* ── Feature #6: Shooting Zones Heat Map ── */
   .zones-section { margin: 24px 0; }
   .zones-title { font-size: 16px; font-weight: 700; color: var(--text-1); margin-bottom: 12px; }
@@ -3787,6 +3809,156 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('DOMContentLoaded', showBanner);
 })();
 
+
+// ── Feature #19: Animated Onboarding Tips ──
+(function() {
+  var DONE_KEY = 'hoopai_onboard_done';
+
+  var STEPS = [
+    {
+      title: 'Welcome to HoopAI! 🏀',
+      desc: "Your personal basketball training coach. Let's take a quick tour — it only takes 20 seconds.",
+      target: null,
+      position: 'center'
+    },
+    {
+      title: 'Record Your Shots 🎯',
+      desc: 'Tap MAKE or MISS after each shot attempt. Your stats update in real-time.',
+      target: '.shot-btn-row',
+      position: 'above'
+    },
+    {
+      title: 'Drill Library 📚',
+      desc: 'Browse 13 drills by category. Tap "Start Drill" to activate the workout timer.',
+      target: '.nav-bar',
+      position: 'above'
+    },
+    {
+      title: 'Track Your Progress 📊',
+      desc: 'The Progress tab shows your streak, weekly shot volume, personal records, and milestones.',
+      target: '.nav-bar',
+      position: 'above'
+    },
+    {
+      title: "You're all set! 🚀",
+      desc: 'Start your first session — hit Make or Miss on every shot and let HoopAI coach you to the next level.',
+      target: null,
+      position: 'center'
+    }
+  ];
+
+  var currentStep = 0;
+
+  function positionTooltip(target, position) {
+    var tooltip = document.getElementById('onboardTooltip');
+    var highlight = document.getElementById('onboardHighlight');
+    if (!tooltip) return;
+
+    highlight.style.display = 'none';
+
+    if (!target || position === 'center') {
+      tooltip.style.top = '50%';
+      tooltip.style.left = '50%';
+      tooltip.style.transform = 'translate(-50%, -50%) scale(1)';
+      tooltip.style.right = 'auto';
+      tooltip.style.bottom = 'auto';
+      return;
+    }
+
+    var el = document.querySelector(target);
+    if (!el) {
+      tooltip.style.top = '50%';
+      tooltip.style.left = '50%';
+      tooltip.style.transform = 'translate(-50%, -50%) scale(1)';
+      return;
+    }
+
+    var rect = el.getBoundingClientRect();
+    // Highlight element
+    highlight.style.display = 'block';
+    highlight.style.top = (rect.top + window.scrollY - 4) + 'px';
+    highlight.style.left = (rect.left - 4) + 'px';
+    highlight.style.width = (rect.width + 8) + 'px';
+    highlight.style.height = (rect.height + 8) + 'px';
+
+    // Position tooltip above element
+    tooltip.style.transform = 'scale(1)';
+    tooltip.style.right = 'auto';
+    tooltip.style.bottom = 'auto';
+    var tipH = 180;
+    if (position === 'above') {
+      tooltip.style.top = Math.max(8, rect.top - tipH - 16) + 'px';
+      tooltip.style.left = Math.max(16, Math.min(rect.left, window.innerWidth - 300)) + 'px';
+    } else {
+      tooltip.style.top = (rect.bottom + 16) + 'px';
+      tooltip.style.left = Math.max(16, Math.min(rect.left, window.innerWidth - 300)) + 'px';
+    }
+  }
+
+  function renderStep(idx) {
+    var step = STEPS[idx];
+    if (!step) return;
+    var el = function(id){ return document.getElementById(id); };
+    if (el('onboardStep')) el('onboardStep').textContent = 'Step ' + (idx+1) + ' of ' + STEPS.length;
+    if (el('onboardTitle')) el('onboardTitle').textContent = step.title;
+    if (el('onboardDesc')) el('onboardDesc').textContent = step.desc;
+
+    // Dots
+    var dots = el('onboardDots');
+    if (dots) {
+      dots.innerHTML = '';
+      STEPS.forEach(function(_, i) {
+        var d = document.createElement('div');
+        d.className = 'onboard-dot' + (i === idx ? ' active' : '');
+        dots.appendChild(d);
+      });
+    }
+
+    // Next button label
+    var btn = document.querySelector('.onboard-next-btn');
+    if (btn) btn.textContent = idx === STEPS.length - 1 ? "Let's Go! 🚀" : 'Next →';
+
+    positionTooltip(step.target, step.position);
+  }
+
+  window.nextOnboardStep = function() {
+    currentStep++;
+    if (currentStep >= STEPS.length) {
+      skipOnboarding();
+      return;
+    }
+    renderStep(currentStep);
+  };
+
+  window.skipOnboarding = function() {
+    var overlay = document.getElementById('onboardOverlay');
+    if (overlay) overlay.classList.remove('active');
+    localStorage.setItem(DONE_KEY, '1');
+  };
+
+  function startOnboarding() {
+    if (localStorage.getItem(DONE_KEY)) return;
+    currentStep = 0;
+    var overlay = document.getElementById('onboardOverlay');
+    if (!overlay) return;
+    overlay.classList.add('active');
+    renderStep(0);
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(startOnboarding, 1200);
+  });
+
+  // Dev reset hook
+  window.resetOnboarding = function() {
+    localStorage.removeItem(DONE_KEY);
+    currentStep = 0;
+    var overlay = document.getElementById('onboardOverlay');
+    if (overlay) overlay.classList.add('active');
+    renderStep(0);
+  };
+})();
+
 // ── Feature #6: Shooting Zones Heat Map ──
 (function() {
   var ZONE_NAMES = { 'paint': 'Paint', 'mid-left': 'Mid-Left', 'mid-right': 'Mid-Right', 'corner3-left': 'Corner 3 Left', 'corner3-right': 'Corner 3 Right' };
@@ -4418,6 +4590,25 @@ document.addEventListener('DOMContentLoaded', () => {
     <div class="share-actions">
       <button class="share-action-btn share-save-btn" onclick="saveShareCard()">💾 Save Image</button>
       <button class="share-action-btn share-close-btn" onclick="closeShareCard()">✕ Close</button>
+    </div>
+  </div>
+
+
+  <!-- Feature #19: Onboarding Overlay -->
+  <div class="onboard-overlay" id="onboardOverlay">
+    <div class="onboard-backdrop" onclick="skipOnboarding()"></div>
+    <div class="onboard-highlight" id="onboardHighlight"></div>
+    <div class="onboard-tooltip" id="onboardTooltip">
+      <div class="onboard-tooltip-step" id="onboardStep">Step 1 of 5</div>
+      <div class="onboard-tooltip-title" id="onboardTitle">Welcome to HoopAI!</div>
+      <div class="onboard-tooltip-desc" id="onboardDesc">Your personal basketball training coach. Let's show you around.</div>
+      <div class="onboard-tooltip-footer">
+        <div class="onboard-dots" id="onboardDots"></div>
+        <div class="onboard-btn-row">
+          <button class="onboard-skip-btn" onclick="skipOnboarding()">Skip</button>
+          <button class="onboard-next-btn" onclick="nextOnboardStep()">Next →</button>
+        </div>
+      </div>
     </div>
   </div>
 
