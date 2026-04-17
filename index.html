@@ -400,6 +400,45 @@
     .camera-empty-text { font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.8); }
     .camera-empty-btn { background: var(--brand); color: #fff; border: none; border-radius: 24px; padding: 12px 28px; font-size: 15px; font-weight: 800; cursor: pointer; margin-top: 4px; }
 
+    /* ─── SCOUTING SECTION ───────────────────────────────────── */
+    .scouting-form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+    .scouting-input {
+        background: var(--surface2); border: 1px solid var(--border);
+        border-radius: var(--radius-sm); padding: 10px 14px;
+        color: var(--text-1); font-size: 14px; font-family: inherit;
+        outline: none; transition: border-color 0.2s;
+    }
+    .scouting-input:focus { border-color: var(--brand); }
+    .scouting-textarea {
+        background: var(--surface2); border: 1px solid var(--border);
+        border-radius: var(--radius-sm); padding: 10px 14px;
+        color: var(--text-1); font-size: 14px; font-family: inherit;
+        resize: vertical; min-height: 72px; outline: none; transition: border-color 0.2s;
+    }
+    .scouting-textarea:focus { border-color: var(--brand); }
+    .scouting-save-btn {
+        align-self: flex-end; background: var(--brand); color: #fff;
+        border: none; border-radius: 20px; padding: 9px 22px;
+        font-size: 14px; font-weight: 700; cursor: pointer;
+        transition: opacity 0.2s;
+    }
+    .scouting-save-btn:active { opacity: 0.75; }
+    .scout-card {
+        background: var(--surface2); border: 1px solid var(--border);
+        border-radius: var(--radius-md); padding: 14px 16px;
+        margin-bottom: 10px; position: relative;
+    }
+    .scout-card-name { font-size: 14px; font-weight: 700; color: var(--text-1); margin-bottom: 4px; }
+    .scout-card-notes { font-size: 13px; color: var(--text-2); line-height: 1.5; white-space: pre-wrap; }
+    .scout-card-date { font-size: 11px; color: var(--text-3); margin-top: 6px; }
+    .scout-card-del {
+        position: absolute; top: 10px; right: 12px;
+        background: none; border: none; color: var(--text-3);
+        font-size: 16px; cursor: pointer; padding: 4px;
+        transition: color 0.2s;
+    }
+    .scout-card-del:hover { color: var(--red); }
+
     .camera-overlay {
         position: absolute;
         inset: 0;
@@ -2568,6 +2607,17 @@
         <div class="journal-section" id="journalSection">
           <div class="journal-section-title">📓 Session Journal</div>
           <div id="journalList"><div class="journal-empty">No sessions logged yet. End a session to add notes.</div></div>
+        </div>
+
+        <!-- Feature #28: Opponent Scouting Notes -->
+        <div class="journal-section" id="scoutingSection">
+          <div class="journal-section-title">🕵️ Opponent Scouting</div>
+          <div class="scouting-form">
+            <input id="scoutName" class="scouting-input" type="text" placeholder="Opponent / Team name" maxlength="60" />
+            <textarea id="scoutNotes" class="scouting-textarea" placeholder="Add scouting notes (tendencies, weaknesses, plays…)" rows="3" maxlength="500"></textarea>
+            <button class="scouting-save-btn" onclick="window.saveScout()">Save Scout</button>
+          </div>
+          <div id="scoutList"><div class="journal-empty">No scouting reports yet.</div></div>
         </div>
 
         <!-- Feature #15: Personal Records & Milestones -->
@@ -5190,6 +5240,60 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 500);
         }
     };
+})();
+
+
+/* ─── FEATURE #28: OPPONENT SCOUTING NOTES ──────────────── */
+(function() {
+    var SCOUT_KEY = 'hoopai_scouts';
+
+    function getScouts() {
+        try { return JSON.parse(localStorage.getItem(SCOUT_KEY) || '[]'); } catch(e) { return []; }
+    }
+    function saveScouts(arr) { localStorage.setItem(SCOUT_KEY, JSON.stringify(arr)); }
+
+    function renderScouts() {
+        var list = document.getElementById('scoutList');
+        if (!list) return;
+        var scouts = getScouts();
+        if (!scouts.length) {
+            list.innerHTML = '<div class="journal-empty">No scouting reports yet.</div>';
+            return;
+        }
+        list.innerHTML = scouts.slice().reverse().map(function(s, i) {
+            var realIdx = scouts.length - 1 - i;
+            return '<div class="scout-card">' +
+                '<button class="scout-card-del" onclick="window.deleteScout(' + realIdx + ')">✕</button>' +
+                '<div class="scout-card-name">🕵️ ' + s.name + '</div>' +
+                '<div class="scout-card-notes">' + s.notes.replace(/</g,'&lt;') + '</div>' +
+                '<div class="scout-card-date">' + new Date(s.ts).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}) + '</div>' +
+                '</div>';
+        }).join('');
+    }
+
+    window.saveScout = function() {
+        var nameEl = document.getElementById('scoutName');
+        var notesEl = document.getElementById('scoutNotes');
+        var name = (nameEl ? nameEl.value.trim() : '');
+        var notes = (notesEl ? notesEl.value.trim() : '');
+        if (!name) { if (nameEl) nameEl.focus(); return; }
+        var scouts = getScouts();
+        scouts.push({ name: name, notes: notes, ts: Date.now() });
+        saveScouts(scouts);
+        if (nameEl) nameEl.value = '';
+        if (notesEl) notesEl.value = '';
+        renderScouts();
+    };
+
+    window.deleteScout = function(idx) {
+        var scouts = getScouts();
+        scouts.splice(idx, 1);
+        saveScouts(scouts);
+        renderScouts();
+    };
+
+    // Render on load
+    renderScouts();
 })();
 
 </script>
