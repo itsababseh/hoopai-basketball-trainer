@@ -1802,6 +1802,36 @@
 .backup-status.success { background: #22c55e; color: #fff; opacity: 1; }
 .backup-status.error { background: #dc2626; color: #fff; opacity: 1; }
 
+/* ── Feature #40: PWA Install Banner ── */
+.pwa-install-banner {
+  position: fixed; bottom: 72px; left: 50%; transform: translateX(-50%) translateY(120%);
+  width: calc(100% - 32px); max-width: 400px; background: var(--surface);
+  border-radius: 16px; padding: 18px; box-shadow: 0 8px 32px rgba(0,0,0,.18);
+  border: 1.5px solid rgba(255,107,53,.15); z-index: 9998;
+  transition: transform .4s var(--spring), opacity .3s;
+  opacity: 0; pointer-events: none;
+}
+.pwa-install-banner.visible {
+  transform: translateX(-50%) translateY(0); opacity: 1; pointer-events: auto;
+}
+.pwa-install-banner-header {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
+}
+.pwa-install-icon {
+  width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, var(--brand), #ff9a6c);
+  display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0;
+}
+.pwa-install-text h3 { font-size: 1rem; margin: 0; color: var(--text-1); }
+.pwa-install-text p { font-size: .8rem; margin: 2px 0 0; color: var(--text-3); }
+.pwa-install-actions { display: flex; gap: 10px; }
+.pwa-install-btn {
+  flex: 1; padding: 10px; border: none; border-radius: 10px; font-size: .9rem;
+  font-weight: 700; cursor: pointer; transition: transform .15s var(--spring);
+}
+.pwa-install-btn:active { transform: scale(.96); }
+.pwa-install-btn.primary { background: var(--brand); color: #fff; }
+.pwa-install-btn.secondary { background: rgba(255,107,53,.10); color: var(--text-2); }
+
 /* ── Feature #15: Personal Records & Milestones ── */
   .pr-section { margin: 24px 0; max-width: 100%; overflow: hidden; }
   .pr-section-title { font-size: 16px; font-weight: 700; color: var(--text-1); margin-bottom: 4px; }
@@ -3253,6 +3283,20 @@
         </div>
       </div>
       <div id="backupStatus" class="backup-status"></div>
+
+      <div id="pwaInstallBanner" class="pwa-install-banner">
+        <div class="pwa-install-banner-header">
+          <div class="pwa-install-icon">🏀</div>
+          <div class="pwa-install-text">
+            <h3>Install HoopAI</h3>
+            <p>Add to home screen for the full app experience</p>
+          </div>
+        </div>
+        <div class="pwa-install-actions">
+          <button class="pwa-install-btn secondary" onclick="dismissInstallBanner()">Not Now</button>
+          <button class="pwa-install-btn primary" onclick="installPWA()">⬇ Install</button>
+        </div>
+      </div>
 
       <div class="zones-section">
           <div class="heatmap-toggle-row">
@@ -7218,6 +7262,82 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   updateBackupInfo();
+
+})();
+
+// ── Feature #40: PWA Install Banner ──
+(function() {
+  var _deferredPrompt = null;
+  var DISMISS_KEY = 'hoopai_pwa_dismiss';
+  var DISMISS_DAYS = 7;
+
+  function isDismissed() {
+    var ts = localStorage.getItem(DISMISS_KEY);
+    if (!ts) return false;
+    var diff = Date.now() - parseInt(ts, 10);
+    return diff < DISMISS_DAYS * 86400000;
+  }
+
+  function showBanner() {
+    var banner = document.getElementById('pwaInstallBanner');
+    if (banner) banner.classList.add('visible');
+  }
+
+  function hideBanner() {
+    var banner = document.getElementById('pwaInstallBanner');
+    if (banner) banner.classList.remove('visible');
+  }
+
+  window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    _deferredPrompt = e;
+    if (!isDismissed()) {
+      setTimeout(showBanner, 2000);
+    }
+  });
+
+  window.installPWA = function() {
+    if (!_deferredPrompt) {
+      // Fallback: show manual instructions
+      var ua = navigator.userAgent.toLowerCase();
+      if (ua.indexOf('iphone') > -1 || ua.indexOf('ipad') > -1) {
+        alert('To install HoopAI:\n\n1. Tap the Share button (box with arrow)\n2. Scroll down and tap "Add to Home Screen"\n3. Tap "Add"');
+      } else {
+        alert('To install HoopAI:\n\n1. Tap the browser menu (three dots)\n2. Tap "Add to Home Screen" or "Install App"\n3. Confirm the installation');
+      }
+      hideBanner();
+      return;
+    }
+    _deferredPrompt.prompt();
+    _deferredPrompt.userChoice.then(function(result) {
+      if (result.outcome === 'accepted') {
+        hideBanner();
+      }
+      _deferredPrompt = null;
+    });
+  };
+
+  window.dismissInstallBanner = function() {
+    localStorage.setItem(DISMISS_KEY, Date.now().toString());
+    hideBanner();
+  };
+
+  window.addEventListener('appinstalled', function() {
+    hideBanner();
+    _deferredPrompt = null;
+  });
+
+  // For iOS / browsers without beforeinstallprompt — show after 3 sessions
+  if (!window.matchMedia('(display-mode: standalone)').matches) {
+    var visits = parseInt(localStorage.getItem('hoopai_visit_count') || '0', 10) + 1;
+    localStorage.setItem('hoopai_visit_count', visits.toString());
+    if (visits >= 3 && !isDismissed() && !_deferredPrompt) {
+      var ua = navigator.userAgent.toLowerCase();
+      if (ua.indexOf('iphone') > -1 || ua.indexOf('ipad') > -1 || ua.indexOf('safari') > -1) {
+        setTimeout(showBanner, 3000);
+      }
+    }
+  }
 
 })();
 
