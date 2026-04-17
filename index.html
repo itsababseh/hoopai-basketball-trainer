@@ -79,6 +79,64 @@
     }
     #themeToggle:active { transform: scale(0.88); }
 
+    /* ─── OFFLINE INDICATOR ──────────────────────────────────── */
+    #offlineBanner {
+        position: fixed;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        background: #1C1C1E;
+        color: #fff;
+        padding: 10px 20px;
+        border-radius: 24px;
+        font-size: 13px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 9997;
+        transition: opacity 0.35s ease, transform 0.35s var(--spring);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+        white-space: nowrap;
+    }
+    #offlineBanner.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+    #offlineBanner.online { background: #1C3A25; }
+    .offline-dot {
+        width: 8px; height: 8px; border-radius: 50%;
+        background: var(--red); flex-shrink: 0;
+    }
+    #offlineBanner.online .offline-dot { background: var(--green); }
+
+    /* Status pill in header area */
+    #offlinePill {
+        position: fixed;
+        top: 14px;
+        left: 16px;
+        z-index: 999;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 5px 10px;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--text-2);
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    #offlinePill.visible { opacity: 1; }
+    .offline-pill-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+    #offlinePill.offline-mode .offline-pill-dot { background: var(--red); }
+    #offlinePill.offline-mode { color: var(--red); border-color: rgba(255,69,58,0.3); }
+
     /* ─── CONFETTI CANVAS ────────────────────────────────────── */
     #confettiCanvas {
         position: fixed;
@@ -1789,6 +1847,8 @@
     <button id="themeToggle" onclick="window.toggleTheme()" title="Toggle theme">🌙</button>
     <canvas id="confettiCanvas"></canvas>
     <div id="celebToast"></div>
+    <div id="offlineBanner"><span class="offline-dot"></span><span id="offlineBannerText">You're offline</span></div>
+    <div id="offlinePill"><span class="offline-pill-dot"></span><span id="offlinePillText">Online</span></div>
   <!-- Feature #18: Practice Reminder Banner -->
   <div class="reminder-banner" id="reminderBanner">
     <div class="reminder-banner-icon">🏀</div>
@@ -5418,6 +5478,57 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('visibilitychange', function() {
         if (!document.hidden) renderWG();
     });
+})();
+
+
+/* ─── FEATURE #30: OFFLINE SYNC INDICATOR ───────────────── */
+(function() {
+    var banner  = document.getElementById('offlineBanner');
+    var bannerTxt = document.getElementById('offlineBannerText');
+    var pill    = document.getElementById('offlinePill');
+    var pillTxt = document.getElementById('offlinePillText');
+    var bannerTimer = null;
+
+    function showBanner(msg, isOnline) {
+        if (!banner) return;
+        if (bannerTimer) clearTimeout(bannerTimer);
+        if (bannerTxt) bannerTxt.textContent = msg;
+        banner.classList.toggle('online', !!isOnline);
+        banner.classList.add('show');
+        bannerTimer = setTimeout(function() {
+            banner.classList.remove('show');
+        }, 3000);
+    }
+
+    function updatePill(online) {
+        if (!pill) return;
+        if (online) {
+            pill.classList.remove('offline-mode');
+            pill.classList.remove('visible');
+            if (pillTxt) pillTxt.textContent = 'Online';
+        } else {
+            pill.classList.add('offline-mode', 'visible');
+            if (pillTxt) pillTxt.textContent = 'Offline';
+        }
+    }
+
+    function handleOffline() {
+        updatePill(false);
+        showBanner('\u26a0\ufe0f  You\u2019re offline \u2014 data saved locally', false);
+    }
+
+    function handleOnline() {
+        updatePill(true);
+        showBanner('\u2705  Back online \u2014 all data synced', true);
+    }
+
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('online',  handleOnline);
+
+    // Set initial state silently (no banner on load if online)
+    if (!navigator.onLine) {
+        updatePill(false);
+    }
 })();
 
 </script>
