@@ -36,6 +36,7 @@
         --blue:   #0A84FF;
         --yellow: #FFD60A;
 
+        --radius: 16px;
         --radius-sm: 10px;
         --radius-md: 16px;
         --radius-lg: 22px;
@@ -1059,7 +1060,7 @@
     .chart-subtitle { font-size: 12px; color: var(--text-3); margin-top: 2px; }
     .chart-value-big { font-size: 28px; font-weight: 800; color: var(--brand); letter-spacing: -1px; }
 
-    canvas { max-height: 140px; }
+    .chart-card canvas { max-height: 140px; }
 
     /* Shot chart */
     .court-card {
@@ -1584,7 +1585,7 @@
     background: var(--surface); border-radius: var(--radius-lg); padding: 16px;
     border: 1px solid var(--border); max-width: 100%; box-sizing: border-box; overflow: hidden;
   }
-  .accuracy-trend-canvas { width: 100%; max-height: 180px; }
+  .accuracy-trend-canvas { width: 100% !important; height: 180px !important; max-height: 180px; }
   .accuracy-trend-stats { display: flex; gap: 12px; margin-top: 12px; justify-content: center; }
   .accuracy-trend-stat { text-align: center; }
   .accuracy-trend-stat-val { font-size: 18px; font-weight: 800; color: var(--brand); }
@@ -1592,7 +1593,7 @@
 
 
   /* ── Feature #32: Social Share Cards ── */
-  .share-card-section { margin: 24px 0; max-width: 100%; overflow: hidden; }
+  .share-card-section { margin: 24px 0; max-width: 100%; overflow: hidden; box-sizing: border-box; }
   .share-card-section h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; color: var(--text-1); }
   .share-card-preview { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); border-radius: 16px; padding: 24px; position: relative; overflow: hidden; max-width: 100%; box-sizing: border-box; }
   [data-theme="light"] .share-card-preview { background: linear-gradient(135deg, #FF6B35 0%, #ff8f65 50%, #ffa07a 100%); }
@@ -1692,7 +1693,7 @@
   .zone-trend-tabs { display: flex; gap: 6px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 4px; }
   .zone-trend-tab { padding: 7px 14px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface); color: var(--text-2); font-size: 0.75rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
   .zone-trend-tab.active { background: var(--brand); color: #fff; border-color: var(--brand); }
-  .zone-trend-chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+  .zone-trend-chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; overflow: hidden; box-sizing: border-box; max-width: 100%; }
   .zone-trend-canvas { width: 100% !important; height: 200px !important; }
   .zone-trend-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
   .zone-trend-stat { text-align: center; padding: 8px; background: var(--surface2); border-radius: 10px; }
