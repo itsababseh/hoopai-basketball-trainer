@@ -4061,6 +4061,91 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Dev reset hook
+  /* ── Feature #25: Drill Timer Audio Cues ───────────────────── */
+  (function() {
+    var AudioCtx = window.AudioContext || window.webkitAudioContext;
+    var ctx = null;
+    function getCtx() {
+      if (!ctx) { try { ctx = new AudioCtx(); } catch(e) {} }
+      return ctx;
+    }
+
+    function beep(freq, duration, type, vol) {
+      var ac = getCtx(); if (!ac) return;
+      var osc = ac.createOscillator();
+      var gain = ac.createGain();
+      osc.connect(gain); gain.connect(ac.destination);
+      osc.type = type || 'sine';
+      osc.frequency.setValueAtTime(freq, ac.currentTime);
+      gain.gain.setValueAtTime(vol || 0.25, ac.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + duration);
+      osc.start(ac.currentTime);
+      osc.stop(ac.currentTime + duration);
+    }
+
+    function doubleBeep() {
+      beep(880, 0.12, 'sine', 0.3);
+      setTimeout(function(){ beep(880, 0.12, 'sine', 0.3); }, 160);
+    }
+
+    function victoryTone() {
+      beep(523, 0.15, 'sine', 0.3);
+      setTimeout(function(){ beep(659, 0.15, 'sine', 0.3); }, 170);
+      setTimeout(function(){ beep(784, 0.3, 'sine', 0.4); }, 340);
+    }
+
+    function countdownBeep() { beep(660, 0.1, 'square', 0.2); }
+
+    // Override sfx with richer versions
+    var _origSfx = window.sfx || {};
+    window.sfx = {
+      swish: _origSfx.swish || function(){},
+      buzzer: function() { countdownBeep(); if (_origSfx.buzzer) _origSfx.buzzer(); },
+      cheer: function() { victoryTone(); if (_origSfx.cheer) _origSfx.cheer(); },
+      doubleBeep: doubleBeep,
+      countdownBeep: countdownBeep,
+      victoryTone: victoryTone
+    };
+
+    // Hook timerToggle to add 5s double-beep (patch the interval tick)
+    // We patch by overriding sfx.buzzer to detect remaining=5
+    var _origBuzzer = window.sfx.buzzer;
+    window.sfx.buzzer = function() {
+      // timerRemaining is in outer scope of Feature #14's IIFE — read from display
+      var disp = document.getElementById('timerDisplay');
+      var rem = disp ? disp.textContent : '';
+      // parse mm:ss
+      var parts = rem.split(':');
+      var secs = parts.length === 2 ? parseInt(parts[0])*60 + parseInt(parts[1]) : 99;
+      if (secs === 5) { doubleBeep(); } else { countdownBeep(); }
+    };
+
+    // Hook startDrill to announce drill name
+    var _origStartDrill = window.startDrill;
+    window.startDrill = function(name) {
+      if (_origStartDrill) _origStartDrill(name);
+      // Unlock AudioContext on user gesture
+      var ac = getCtx();
+      if (ac && ac.state === 'suspended') ac.resume();
+      // Voice announcement
+      if (window.speechSynthesis) {
+        var u = new SpeechSynthesisUtterance("Starting drill: " + name);
+        u.rate = 1.1; u.pitch = 1.0; u.volume = 0.9;
+        window.speechSynthesis.speak(u);
+      }
+      // Start beep
+      setTimeout(function(){ beep(440, 0.2, 'sine', 0.35); }, 300);
+    };
+
+    // Unlock AudioContext on first user interaction
+    document.addEventListener('click', function unlock() {
+      var ac = getCtx();
+      if (ac && ac.state === 'suspended') ac.resume();
+      document.removeEventListener('click', unlock);
+    }, { once: true });
+  })();
+  /* ── End Feature #25 ────────────────────────────────────────── */
+
   /* ── Feature #24: Daily Streak Fire Calendar ───────────────── */
   (function() {
     var DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
