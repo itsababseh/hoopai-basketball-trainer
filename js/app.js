@@ -691,6 +691,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function flashBtn(el) {
+    if (!el || !el.classList) return;
     el.classList.remove('flashing');
     void el.offsetWidth;
     el.classList.add('flashing');
@@ -768,10 +769,24 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   window.saveSummary = function() {
+    var makes = window.sessionMakes || 0;
+    var attempts = window.sessionAttempts || 0;
     var prevSessions = parseInt(localStorage.getItem('hoopai_sessions') || '0');
     var prevShots = parseInt(localStorage.getItem('hoopai_shots') || '0');
     safeSetItem('hoopai_sessions', prevSessions + 1);
-    safeSetItem('hoopai_shots', prevShots + (window.sessionAttempts || 0));
+    safeSetItem('hoopai_shots', prevShots + attempts);
+    // Persist to session history so Analyze tab, profile stats, and share card have real data
+    var hist = [];
+    try { hist = JSON.parse(localStorage.getItem('hoopai_session_history') || '[]'); } catch(e) {}
+    hist.push({
+      date: new Date().toISOString(),
+      makes: makes,
+      misses: attempts - makes,
+      shotType: window.currentShotType || 'layup',
+      streak: parseInt(localStorage.getItem('hoopai_streak') || '0')
+    });
+    if (hist.length > 200) hist = hist.slice(-200);
+    safeSetItem('hoopai_session_history', JSON.stringify(hist));
     var today = new Date().toDateString();
     safeSetItem('hoopai_last_session', today);
     newSession();
@@ -1948,6 +1963,15 @@ document.addEventListener('DOMContentLoaded', () => {
     d.attempts++;
     if (result === 'make') d.makes++;
     saveZoneData(activeZone, d);
+    // Sync to flat keys read by computeAnalytics, drawShotChart, and the heatmap overlay
+    var mkKey = 'hoopai_zone_makes_' + activeZone;
+    var miKey = 'hoopai_zone_misses_' + activeZone;
+    if (result === 'make') {
+      localStorage.setItem(mkKey, parseInt(localStorage.getItem(mkKey) || '0') + 1);
+    } else {
+      localStorage.setItem(miKey, parseInt(localStorage.getItem(miKey) || '0') + 1);
+    }
+    if (window.refreshHeatmap) window.refreshHeatmap();
     refreshZoneColors();
     document.getElementById('zoneTapModal').classList.remove('visible');
     activeZone = null;

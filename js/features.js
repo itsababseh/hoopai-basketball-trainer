@@ -988,8 +988,8 @@
         }
         if (!confirm('This will overwrite your current data with the backup. Continue?')) return;
         var restored = 0;
-        getHoopAIKeys().forEach(function(key) {
-          if (data[key] !== undefined) {
+        Object.keys(data).forEach(function(key) {
+          if (key.indexOf('hoopai_') === 0) {
             localStorage.setItem(key, data[key]);
             restored++;
           }
